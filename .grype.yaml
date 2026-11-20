@@ -1,0 +1,21 @@
+# .grype.yaml: grype ignore rules. grype loads this file from the repository
+# root, where ci/scan.sh runs. The severity threshold stays in ci/scanners.env
+# (VULN_FAIL_ON); do not change it here.
+#
+# Every rule needs: the advisory, the narrowest package and location match, the
+# reason, who approved it, and an expiry date. Remove the rule on or before the
+# expiry date, or when the cause is fixed, whichever comes first.
+ignore:
+  # GO-2026-6860 (High) in golang.org/x/net v0.61.0, compiled into the buf CLI
+  # binary that @bufbuild/buf 1.75.0 ships as @bufbuild/buf-<platform>.
+  # Reason: buf is a dev/CI tool (buf lint, breaking, generate on our own
+  # .proto files), never shipped in an image or deployed; scope local only.
+  # No buf release built with x/net >= 0.62.0 exists yet (1.75.0 is the newest).
+  # Approved by @AlbertoRiorda95 in PR #54 (option b), 2026-11-20.
+  # EXPIRES 2027-01-19: then bump @bufbuild/buf to a release built with
+  # x/net >= 0.62.0 and delete this rule; if there is none, ask again in a PR.
+  - vulnerability: GO-2026-6860
+    package:
+      name: golang.org/x/net
+      type: go-module
+      location: "**/node_modules/@bufbuild/buf-*/**"

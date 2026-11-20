@@ -1,0 +1,30 @@
+{
+  "name": "agent-team-demo-e2e",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "workspaces": [
+    "services/viz-web",
+    "services/control-web",
+    "libs/trajectory-proto",
+    "packages/ui-tokens"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "bash ci/npm-workspaces.sh typecheck",
+    "test": "bash ci/npm-workspaces.sh test",
+    "build": "bash ci/npm-workspaces.sh build"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "1.75.0",
+    "@eslint/js": "10.0.1",
+    "eslint": "10.15.0",
+    "eslint-plugin-vue": "10.12.1",
+    "globals": "17.14.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0",
+    "vue-eslint-parser": "10.4.2"
+  }
+}

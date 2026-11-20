@@ -1,0 +1,2 @@
+- [CI sandbox limits](project_ci-sandbox-limits.md) — in the unattended CI run, docker/curl/rm/linters are blocked; npm, node, git work
+- [buf binary in grype](project_buf-binary-grype.md) — vulnerabilities job scans Go modules inside @bufbuild/buf's binary (PR #54)
