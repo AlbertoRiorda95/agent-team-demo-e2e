@@ -1,0 +1,1 @@
+- [Web server workspaces](project_web_server_workspaces.md) — *-web/server packages need devops to add them to root workspaces
