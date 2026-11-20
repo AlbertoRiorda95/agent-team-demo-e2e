@@ -118,9 +118,7 @@ jobs:
         uses: anthropics/claude-code-action@f27be6b65a4652f08a2ba3cff79114829b588967  # v1.0.252
         id: task
         with:
-          # With a Claude subscription use instead:
-          # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             You are the "${{ needs.route.outputs.label }}" agent (drop the "agent:"
             prefix to get the role). Follow docs/roles/<role>.md and AGENTS.md.
@@ -166,9 +164,7 @@ jobs:
         uses: anthropics/claude-code-action@f27be6b65a4652f08a2ba3cff79114829b588967  # v1.0.252
         id: iterate
         with:
-          # With a Claude subscription use instead:
-          # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           trigger_phrase: /agent
           # The role's `tools:` list leaves out the action's comment tool, so the
           # reply would stay at "I'll analyze this": it is posted with gh instead.
