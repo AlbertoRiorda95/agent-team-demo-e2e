@@ -142,7 +142,7 @@ Breaking for existing clients: no (additions only; Ping only deprecated).
 | # | Role | Task | Depends on | Issue |
 |---|---|---|---|---|
 | 1 | backend | [proto] The `trajectory.v1` messages, `proto/README.md` (subjects, streams, encoding, `Nats-Msg-Id`), the stream definitions in `proto/nats/streams/`, `demo.v1.Ping` deprecated, regenerated code, `@albertoriorda95/trajectory-proto` 0.1.0 exporting the types and the subject constants, with its Vitest round-trip, size and subject tests | foundations#2 | - |
-| 2 | devops | [repo] NATS `max_payload` 8 MB and a `nats-init` service in `compose.yml` (nats-box pinned by digest) that applies `proto/nats/streams/` before the services start | 1, foundations#11 | - |
+| 2 | devops | [repo] NATS `max_payload` 8 MB and a `nats-init` service in `compose.yml` (nats-box pinned by digest) that applies `proto/nats/streams/` and exits 0, with the services depending on it through `condition: service_completed_successfully` | 1, foundations#11 | - |
 
 ## Readiness checklist
 - [x] goal, users and out of scope agreed
