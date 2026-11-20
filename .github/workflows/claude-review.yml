@@ -36,7 +36,7 @@ jobs:
           # Compact at 200K tokens instead of near the 1M window: every turn re-reads the context.
           CLAUDE_CODE_AUTO_COMPACT_WINDOW: "200000"
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: "https://github.com/anthropics/claude-code.git"
           plugins: "code-review@claude-code-plugins"
           prompt: "/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
@@ -76,7 +76,7 @@ jobs:
           # Compact at 200K tokens instead of near the 1M window: every turn re-reads the context.
           CLAUDE_CODE_AUTO_COMPACT_WINDOW: "200000"
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             Review pull request #${{ github.event.pull_request.number }} against what it
             was asked to do. You change nothing and you do not approve.
