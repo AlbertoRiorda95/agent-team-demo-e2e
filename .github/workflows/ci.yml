@@ -178,8 +178,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm run build --workspaces --if-present
-      - run: npm test --workspaces --if-present
+      - run: npm run build    # every workspace's build (ci/npm-workspaces.sh)
+      - run: npm test         # every workspace's tests (ci/npm-workspaces.sh)
 
   # Static analysis for bugs and unsafe code. On a PR only the findings it
   # introduces fail the check; on main the full report is kept as an artifact.
