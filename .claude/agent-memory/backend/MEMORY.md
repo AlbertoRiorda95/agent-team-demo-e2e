@@ -1,0 +1,1 @@
+- [Web workspace manifest](project_web-workspace-manifest.md) — server tasks may precede the UI task; backend creates a minimal package.json + alignment entry

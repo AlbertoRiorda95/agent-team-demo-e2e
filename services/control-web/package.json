@@ -1,0 +1,23 @@
+{
+  "name": "@agent-team-demo-e2e/control-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "start:server": "node server/src/main.ts",
+    "test": "npm run test:server",
+    "test:server": "vitest run --root server",
+    "typecheck": "npm run typecheck:server",
+    "typecheck:server": "tsc -p server/tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "vitest": "5.1.1"
+  },
+  "dependencies": {
+    "fastify": "5.12.8"
+  }
+}
