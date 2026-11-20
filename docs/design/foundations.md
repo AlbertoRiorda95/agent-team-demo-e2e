@@ -103,7 +103,7 @@ Breaking for existing clients: no
 ## Task breakdown
 | # | Role | Task | Depends on | Issue |
 |---|---|---|---|---|
-| 1 | devops | [repo] Root npm workspace (`package.json` with workspaces `services/viz-web`, `services/control-web`, `libs/trajectory-proto`, `packages/ui-tokens`; scripts `lint`, `typecheck`, `test`; ESLint and TypeScript base configs; `@bufbuild/buf`), `compose.yml` with NATS (JetStream) and PostgreSQL 17 with healthchecks, `.env.example` | — | - |
+| 1 | devops | [repo] Root npm workspace (`package.json` with workspaces `services/viz-web`, `services/control-web`, `libs/trajectory-proto`, `packages/ui-tokens`; scripts `lint`, `typecheck`, `test`; ESLint and TypeScript base configs; `@bufbuild/buf`), `compose.yml` with NATS (JetStream) and PostgreSQL 17 with healthchecks, `.env.example`, `.nvmrc` pinning Node 24 | — | - |
 | 2 | backend | [proto] `buf.yaml`, `buf.gen.yaml` (Python, C++, Java, TypeScript), the placeholder `demo.v1.Ping`, and the `libs/trajectory-proto` package (0.0.0, build from the generated TypeScript) | 1 | - |
 | 3 | backend | [api] FastAPI skeleton with uv: `GET /healthz` (NATS), placeholder `POST /launches` per the contract, ruff and mypy config, contract test against `docs/api/openapi.yaml` | 2 | - |
 | 4 | backend | [propagator] CMake + Conan 2 skeleton with `CMakePresets.json` (release), a library with a stub entry point, a NATS connection at start-up, a GoogleTest smoke test, `.clang-format` and `.clang-tidy` | 2 | - |
