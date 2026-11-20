@@ -11,6 +11,10 @@ outside hosts, `rm`/`mv`, `chmod`, `yamllint`, `shellcheck` and `python3`
 need approval, so they are blocked. `npm`, `npx`, `git` (including
 `git clean`, `git update-index --chmod=+x`) and `gh issue|pr` work.
 
+The push token is a GitHub App without `workflows` permission: a push that
+touches `.github/workflows/*` is rejected. Keep workflow edits out of the
+branch history and put them as a patch in the PR for a human.
+
 **Why:** image digests cannot be resolved and compose/Dockerfiles cannot be
 validated locally in that environment.
 
