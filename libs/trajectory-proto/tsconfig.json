@@ -1,0 +1,8 @@
+// Type check of the sources and the tests (no output): `npm run typecheck`.
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["src", "test"]
+}
