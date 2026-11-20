@@ -1,0 +1,6 @@
+# Hosts the security agent may send requests to, one per line.
+# No staging: localhost and the local minikube cluster (its default IP and the ingress host). Never production.
+localhost
+127.0.0.1
+192.168.49.2
+trajectory.local
