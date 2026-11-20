@@ -82,7 +82,9 @@ jobs:
       - run: npx buf lint
       - name: Breaking changes against the base branch
         if: github.event_name == 'pull_request'
-        run: npx buf breaking --against ".git#branch=origin/${{ github.base_ref }}"
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: npx buf breaking --against ".git#branch=origin/${BASE_REF}"
 
   api:
     needs: changes

@@ -19,6 +19,34 @@ import socket
 import time
 import sys
 import argparse
+import os
+import shlex
+
+
+def parse_server_command(cmd):
+    """Split a server command into (argv, cwd) without invoking a shell.
+
+    Supports leading "cd <dir> &&" steps (e.g. "cd frontend && npm run dev"),
+    which set the working directory. Other shell syntax is rejected.
+    """
+    tokens = shlex.split(cmd)
+    steps = [[]]
+    for token in tokens:
+        if token == '&&':
+            steps.append([])
+        else:
+            steps[-1].append(token)
+
+    cwd = None
+    for step in steps[:-1]:
+        if len(step) != 2 or step[0] != 'cd':
+            raise ValueError(f"Only 'cd <dir> &&' may precede the server command: {cmd!r}")
+        cwd = os.path.join(cwd or os.getcwd(), os.path.expanduser(step[1]))
+
+    argv = steps[-1]
+    if not argv or any(t in ('|', ';', '||', '&', '>', '<') for t in argv):
+        raise ValueError(f"Unsupported server command (no shell operators allowed): {cmd!r}")
+    return argv, cwd
 
 def is_server_ready(port, timeout=30):
     """Wait for server to be ready by polling the port."""
@@ -65,10 +93,11 @@ def main():
         for i, server in enumerate(servers):
             print(f"Starting server {i+1}/{len(servers)}: {server['cmd']}")
 
-            # Use shell=True to support commands with cd and &&
+            # No shell: leading "cd <dir> &&" steps become the working directory
+            argv, cwd = parse_server_command(server['cmd'])
             process = subprocess.Popen(
-                server['cmd'],
-                shell=True,
+                argv,
+                cwd=cwd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
