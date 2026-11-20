@@ -1,0 +1,11 @@
+# Critical paths always require your review.
+/deploy/                                             @AlbertoRiorda95
+/.github/                                            @AlbertoRiorda95
+/ci/                                                 @AlbertoRiorda95
+/.claude/                                            @AlbertoRiorda95
+/.opencode/                                          @AlbertoRiorda95
+/proto/                                              @AlbertoRiorda95
+/docs/api/                                           @AlbertoRiorda95
+/services/store/src/main/resources/db/migration/     @AlbertoRiorda95
+/services/control-web/server/                        @AlbertoRiorda95
+/services/control-web/server/openapi.yaml            @AlbertoRiorda95

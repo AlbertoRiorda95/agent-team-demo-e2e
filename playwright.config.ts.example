@@ -1,0 +1,35 @@
+// playwright.config.ts: UI tests for the screens in docs/design/.
+// Rename this file to playwright.config.ts to turn on the `ui` CI job, and add
+// the dev dependencies: npm i -D @playwright/test @axe-core/playwright
+// Two web apps: viz-web (tests in e2e/viz-web/, port 4173) and control-web
+// (tests in e2e/control-web/, port 4174), both served from their built bundle.
+import { defineConfig, devices } from '@playwright/test';
+
+const apps = [
+  { name: 'viz-web', port: 4173 },
+  { name: 'control-web', port: 4174 },
+];
+// the breakpoints of the design system: every test runs at each of them
+const viewports = [
+  { name: 'mobile-320', viewport: { width: 320, height: 720 }, touch: true },
+  { name: 'tablet-768', viewport: { width: 768, height: 1024 }, touch: false },
+  { name: 'desktop-1280', viewport: { width: 1280, height: 800 }, touch: false },
+];
+
+export default defineConfig({
+  testDir: 'e2e',
+  outputDir: 'reports/ui/results',          // screenshots and traces (CI artifact)
+  reporter: [['html', { outputFolder: 'reports/ui/html', open: 'never' }], ['list']],
+  use: { trace: 'retain-on-failure' },
+  projects: apps.flatMap(app => viewports.map(v => ({
+    name: `${app.name}-${v.name}`,
+    testDir: `e2e/${app.name}`,
+    use: { ...devices['Desktop Chrome'], viewport: v.viewport, hasTouch: v.touch, baseURL: `http://localhost:${app.port}` },
+  }))),
+  webServer: apps.map(app => ({
+    command: `npm run build -w services/${app.name} && npm run preview -w services/${app.name} -- --port ${app.port} --strictPort`,
+    url: `http://localhost:${app.port}`,
+    reuseExistingServer: !process.env.CI,
+    timeout: 180_000,
+  })),
+});

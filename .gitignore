@@ -1,0 +1,27 @@
+.claude/settings.local.json
+.env
+.env.*
+!.env.example
+infra/litellm/.env
+node_modules/
+# CI reports (saved as CI artifacts, not committed)
+reports/
+# security reports contain working exploits: keep them out of Git
+docs/security/*
+!docs/security/README.md
+# handoff notes between sessions (the handoff skill)
+.handoff/
+# build output and tool caches of the stacks
+dist/
+build/
+__pycache__/
+*.pyc
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.gradle/
+CMakeUserPresets.json
+# colcon (services/ros2-publisher)
+install/
+log/
