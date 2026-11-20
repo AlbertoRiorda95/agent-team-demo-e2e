@@ -1,0 +1,178 @@
+openapi: 3.1.0
+info:
+  title: agent-team-demo-e2e launch API
+  version: 0.1.0
+  description: >
+    Ingestion API of services/api. A launch describes a point mass pushed by a
+    directed force for a burn duration; the propagation itself happens
+    asynchronously in the pipeline (NATS). SI units, frame ENU with z up and
+    the origin on the ground.
+servers:
+  - url: http://trajectory.local
+  - url: http://localhost:8000
+paths:
+  /launches:
+    post:
+      operationId: createLaunch
+      summary: Submit a launch
+      description: >
+        Accepted launches are published on NATS (`launches.accepted`). After an
+        accepted launch, every request for the next 300 seconds is rejected
+        with 429 (global window); rejected requests do not restart it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LaunchRequest'
+      responses:
+        '202':
+          description: Accepted; the trajectory is being computed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LaunchAccepted'
+        '422':
+          description: The request has a wrong format or a value out of range.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblem'
+        '429':
+          description: A launch was accepted less than 300 seconds ago.
+          headers:
+            Retry-After:
+              description: Seconds until a new launch is accepted.
+              schema:
+                type: integer
+                minimum: 1
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/RateLimitProblem'
+        '503':
+          description: The message bus is not reachable; nothing was accepted.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /healthz:
+    get:
+      operationId: health
+      summary: Liveness and readiness for the Kubernetes probes
+      responses:
+        '200':
+          description: The service is up and connected to NATS.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+        '503':
+          description: The service is up but not connected to NATS.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [degraded]
+components:
+  schemas:
+    Position:
+      type: object
+      additionalProperties: false
+      required: [x_m, y_m, z_m]
+      properties:
+        x_m:
+          type: number
+          description: East, metres.
+        y_m:
+          type: number
+          description: North, metres.
+        z_m:
+          type: number
+          minimum: 0
+          description: Height above the ground, metres.
+    LaunchRequest:
+      type: object
+      additionalProperties: false
+      required: [mass_kg, position, azimuth_deg, elevation_deg, force_n, burn_duration_s]
+      properties:
+        mass_kg:
+          type: number
+          exclusiveMinimum: 0
+        position:
+          $ref: '#/components/schemas/Position'
+        azimuth_deg:
+          type: number
+          minimum: 0
+          exclusiveMaximum: 360
+          description: Direction of the force in the horizontal plane, clockwise from north.
+        elevation_deg:
+          type: number
+          exclusiveMinimum: 0
+          exclusiveMaximum: 90
+          description: Angle of the force above the horizon.
+        force_n:
+          type: number
+          exclusiveMinimum: 0
+        burn_duration_s:
+          type: number
+          exclusiveMinimum: 0
+    LaunchAccepted:
+      type: object
+      required: [launch_id, accepted_at]
+      properties:
+        launch_id:
+          type: string
+          format: uuid
+        accepted_at:
+          type: string
+          format: date-time
+    Problem:
+      type: object
+      description: RFC 9457 problem details.
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+    ValidationProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          required: [errors]
+          properties:
+            errors:
+              type: array
+              items:
+                type: object
+                required: [field, message]
+                properties:
+                  field:
+                    type: string
+                    description: JSON pointer of the bad field, for example /position/z_m.
+                  message:
+                    type: string
+    RateLimitProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          required: [retry_after_s]
+          properties:
+            retry_after_s:
+              type: integer
+              minimum: 1
+              description: Seconds remaining in the 5-minute window.
