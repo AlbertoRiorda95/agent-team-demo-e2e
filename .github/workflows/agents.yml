@@ -54,7 +54,7 @@ jobs:
       request: ${{ steps.owner.outputs.request }}
     steps:
       # the script of the default branch, never the pull request's
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
@@ -105,7 +105,7 @@ jobs:
       # Compact at 200K tokens instead of near the 1M window: every turn re-reads the context.
       CLAUDE_CODE_AUTO_COMPACT_WINDOW: "200000"
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       # The team's registry (ci/registry.env): read token from the secret, else the job token
       - name: Registry login (read only)
         run: ./ci/registry.sh login
@@ -115,7 +115,7 @@ jobs:
       # The session runs as the role's agent (--agent): its tools, and the role's hooks
       # (scripts/hooks/role-hooks.sh), which apply only to a named agent.
       - if: needs.route.outputs.mode == 'task'
-        uses: anthropics/claude-code-action@f27be6b65a4652f08a2ba3cff79114829b588967  # v1.0.252
+        uses: anthropics/claude-code-action@cc98b3ae241b0fcfb6a42a2690751afffecb4452  # v1.0.278
         id: task
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -161,7 +161,7 @@ jobs:
       # /agent <request>: the same agent works on its pull request's branch (or,
       # before there is one, on the issue), as asked in the comment.
       - if: needs.route.outputs.mode == 'iterate'
-        uses: anthropics/claude-code-action@f27be6b65a4652f08a2ba3cff79114829b588967  # v1.0.252
+        uses: anthropics/claude-code-action@cc98b3ae241b0fcfb6a42a2690751afffecb4452  # v1.0.278
         id: iterate
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -211,7 +211,7 @@ jobs:
       id-token: write
       packages: read     # the team's packages on GitHub Packages (ci/registry.sh)
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           ref: ${{ needs.route.outputs.branch }}
       # The team's registry (ci/registry.env): read token from the secret, else the job token
