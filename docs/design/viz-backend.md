@@ -24,8 +24,9 @@ within 1 s, and the server reports its health and its NATS state.
 - The history endpoints `GET /api/launches` and
   `GET /api/launches/{id}/trajectory` and the read-only DB user (viewer, M3).
 - The Viewer UI (M3).
-- Durable storage of the accepted requests: the record is in memory and is
-  not a history (see Data and API). Persistence is store's job.
+- A durable record of the accepted requests: out of scope for M1. The record
+  is in memory only and is not a history (see Data and API); it is rebuilt
+  from the stream at start-up. Persistence is store's job.
 - Producing trajectories (propagation, M2).
 
 ## User flows
@@ -33,8 +34,8 @@ within 1 s, and the server reports its health and its NATS state.
    keeps launch_id, accepted_at and request in its record.
 2. **Read.** `GET /api/accepted-launches` returns the record, newest first.
 3. **Restart.** At start-up the server replays `launches.accepted` from the
-   stream and rebuilds the record before it answers as ready; whatever the
-   stream still holds (7 days) is back.
+   stream and rebuilds the record; whatever the stream still holds (7 days)
+   is back once the replay catches up.
 4. **NATS lost and back.** The subscription drops: `/healthz` answers 503
    `degraded` and `status.viz-web` reports `degraded` while the server can
    still publish; the record keeps what it has and stays readable. On
@@ -49,9 +50,11 @@ Edge cases:
 - More than N entries (N = 1000): the oldest are dropped; the endpoint returns
   at most N. Entries older than the stream's 7 days do not come back after a
   restart.
+- Right after a restart the read endpoint can be empty or partial until the
+  replay catches up; the server does not report this (`/healthz` is plain
+  liveness).
 - Several replicas: each has its own ordered consumer with deliver policy
-  "all", so all hold the same set; a replica that has just started is not ready
-  until its replay has reached the stream's last message.
+  "all", so all end up holding the same set.
 
 ## Screens and states
 None. The server has no UI in M1.
@@ -69,8 +72,7 @@ nothing the stream still holds and replicas agree.
 
 Subscription: an ordered, ephemeral JetStream consumer on `launches.accepted`
 (`LAUNCHES_ACCEPTED` of the library), deliver policy "all", on the `LAUNCHES`
-stream; each replica has its own. The server is ready when the replay is
-caught up.
+stream; each replica has its own.
 
 Contract change, `services/viz-web/server/openapi.yaml` (backend):
 - `GET /api/accepted-launches`: 200, a JSON array, newest first, at most 1000
@@ -79,7 +81,8 @@ Contract change, `services/viz-web/server/openapi.yaml` (backend):
   proto3 JSON with the proto field names (snake_case), produced with the
   library's `toJson`; it is described by reference to the proto message, not
   duplicated. No query parameters, no pagination in M1.
-- `GET /healthz`: unchanged (503 `degraded` without NATS).
+- `GET /healthz`: unchanged, plain liveness (503 `degraded` without NATS,
+  nothing else).
 
 The path is chosen so as not to collide with the M3 `GET /api/launches` and
 `GET /api/launches/{id}/trajectory`. It exists for the tests and for checking
@@ -95,13 +98,13 @@ Breaking for existing clients: no (new route).
 - [ ] The list is newest first; with no launch it is `[]`.
 - [ ] The same message published twice appears once.
 - [ ] With 1001 distinct launches published, the endpoint returns 1000, without the oldest.
-- [ ] After a server restart, the launches still on the stream are listed again, with no duplicates, before `/healthz` answers 200.
+- [ ] After a server restart, the launches still on the stream are listed again, with no duplicates, within 5 s after start-up (at most 1000 messages on the stream).
 - [ ] A message that does not decode, or has no launch_id, is not listed and produces one `PipelineError` with service `viz-web` on `pipeline.errors`.
 - [ ] Stopping NATS makes `/healthz` answer 503 and `GET /api/accepted-launches` keeps answering with the record; restarting NATS returns `/healthz` to 200 and a launch published afterwards is listed, without restarting the server.
 - [ ] `status.viz-web` receives a heartbeat every 5 s (± 1 s).
 
 ## Test seams
-- Server: `GET /api/accepted-launches` and `GET /healthz` through Fastify listening on a random port, with a fake bus behind the subscription port (Vitest): catches ordering, dedupe by launch_id, the bound of N, decode-error handling, readiness; misses real NATS.
+- Server: `GET /api/accepted-launches` and `GET /healthz` through Fastify listening on a random port, with a fake bus behind the subscription port (Vitest): catches ordering, dedupe by launch_id, the bound of N, decode-error handling; misses real NATS.
 - Integration: the server against a real NATS (Testcontainers) with the streams of `proto/nats/streams/`: catches the consumer settings (ordered, deliver "all"), rebuild after restart, reconnection, the `PipelineError` publication, the heartbeat; misses the browser.
 
 ## Reuse
@@ -114,6 +117,8 @@ Breaking for existing clients: no (new route).
 ## Decisions
 - 2026-11-20 — The M1 viz-web server is a skeleton: it consumes `launches.accepted` and records the accepted requests; the SSE live stream and `trajectories.computed` move to `viewer.md` (M3) — user's request on PR #31: nothing produces trajectories in M1.
 - 2026-11-20 — The record (launch_id, accepted_at, request) is kept in memory in the server, bounded to the latest 1000, deduplicated by launch_id, rebuilt at start-up by an ordered ephemeral JetStream consumer on `launches.accepted` with deliver policy "all" — viz-web has no write access to PostgreSQL (read-only user in M3) and the 7-day stream lets every replica rebuild the same set.
+- 2026-11-20 — `/healthz` stays plain liveness (503 `degraded` without NATS, nothing else); no readiness gate on the start-up replay, so the list can be empty or partial right after a restart — user's answer on PR #31.
+- 2026-11-20 — A durable record is out of scope for M1; the in-memory record is explicitly not a history — user's answer on PR #31.
 - 2026-11-20 — `GET /api/accepted-launches` (newest first, proto3 JSON request) as the minimal read endpoint, for the tests — a path that does not collide with the M3 `GET /api/launches`; new route, not breaking.
 - 2026-11-20 — `status.viz-web` heartbeat, `pipeline.errors` for bad messages, `/healthz` in M1; history endpoints and the read-only DB user in M3 — the user confirmed the M3 scope.
 - 2026-11-20 — nats.js v3 and `testcontainers` (Node) — maintained clients.

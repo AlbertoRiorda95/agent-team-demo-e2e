@@ -108,7 +108,7 @@ messages and subjects are in `proto/` (M1 contracts).
 |---|---|
 | api (REST, `docs/api/openapi.yaml`) | `POST /launches` (202, 422, 429); `GET /healthz` |
 | NATS subjects (`proto/`) | `launches.accepted`, `trajectories.computed`, `trajectories.stored`, `pipeline.errors`, `status.<service>`, `config.<service>.set`, `config.<service>.applied` |
-| viz-web server (`services/viz-web/server/openapi.yaml`, M1/M3) | `GET /api/live` (SSE), `GET /api/launches` (paginated), `GET /api/launches/{id}/trajectory` |
+| viz-web server (`services/viz-web/server/openapi.yaml`, M3) | `GET /api/live` (SSE), `GET /api/launches` (paginated), `GET /api/launches/{id}/trajectory` |
 | control-web server (`services/control-web/server/openapi.yaml`, M4) | `GET /api/services`, `POST /api/services/{name}/start`, `POST /api/services/{name}/stop`, `GET /api/config/{service}`, `PUT /api/config/{service}` |
 
 ## Integrations
@@ -156,7 +156,7 @@ data first, no decoration. Details in the design-system skill.
 | Milestone | Features (one spec each) |
 |---|---|
 | M0 Foundations | foundations (walking skeleton: every service starts, minimal compose with NATS + PostgreSQL, CI green) |
-| M1 Contracts and ingestion | contracts (Protobuf schemas in `proto/`, `@albertoriorda95/trajectory-proto` 0.1.0 on GitHub Packages, the status message); launch-intake (api: POST /launches, 422, 429 with remaining time, NATS publish); viz-backend (viz-web server skeleton: NATS subscription, SSE) |
+| M1 Contracts and ingestion | contracts (Protobuf schemas in `proto/`, `@albertoriorda95/trajectory-proto` 0.1.0 on GitHub Packages, the status message); launch-intake (api: POST /launches, 422, 429 with remaining time, NATS publish); viz-backend (viz-web server skeleton: NATS subscription, record of accepted launches) |
 | M2 Propagation and persistence | propagation (C++ propagator, config saved to a local file, status on NATS); persistence (Java store to PostgreSQL, status on NATS) |
 | M3 Visualization | viewer (Vue/Node 3D web app, live and history with the read-only DB user, play/pause/rewind) |
 | M4 Control | control-panel (status, start/stop through a kubectl adapter faked in CI, config changes over the config queue) |

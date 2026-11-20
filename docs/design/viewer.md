@@ -113,7 +113,8 @@ Moved from viz-backend (2026-11-20, to be confirmed when the viewer is designed)
 - Live vs history toggle, and how the live view relates to the record of accepted launches of viz-backend.
 
 ## Task breakdown
-Not defined until the open questions are settled.
+Not defined until the open questions are settled. No issues are created from
+this draft until the M3 studio session.
 
 | # | Role | Task | Depends on | Issue |
 |---|---|---|---|---|
