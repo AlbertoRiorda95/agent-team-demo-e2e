@@ -56,9 +56,8 @@ jobs:
           # Compact at 200K tokens instead of near the 1M window: every turn re-reads the context.
           CLAUDE_CODE_AUTO_COMPACT_WINDOW: "200000"
         with:
-          # With a Claude subscription use instead:
-          # claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Claude subscription token (with an API key, use the anthropic_api_key input instead)
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             You plan how to split issue #${{ github.event.issue.number }} into task
             issues, one per role. You write no code and create no issues: you post a
