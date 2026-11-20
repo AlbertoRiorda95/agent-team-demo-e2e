@@ -14,7 +14,7 @@ Polyglot monorepo:
 - `services/propagator`: C++20, CMake + Conan 2, GoogleTest, clang-format, clang-tidy.
 - `services/ros2-publisher`: C++20, ROS2 Jazzy, colcon.
 - `services/store`: Java 25, Gradle (wrapper), JUnit 5 + Testcontainers, Flyway, PostgreSQL.
-- `services/viz-web`: Vue 3 + Vite + Three.js, TypeScript, Node 24.
+- `services/viz-web`: Vue 3 + Vite + Three.js UI and a Node 24 server (NATS live view pushed over SSE, PostgreSQL history with a read-only user).
 - `services/control-web`: Vue 3 + Vite UI and a Node 24 server (status, kubectl start/stop, config).
 - `proto/`: Protobuf schemas, buf (lint, breaking, generate for Python, C++, Java, TypeScript).
 - `libs/trajectory-proto`: the npm package `@albertoriorda95/trajectory-proto`
@@ -50,10 +50,10 @@ Run them from the repository root unless a folder is given.
 ## How work is delegated in this project
 Route by file boundary, not by topic:
 <!-- agent-team:if role_frontend -->
-- `services/viz-web/`, `services/control-web/` except `services/control-web/server/`, `packages/ui-tokens/`, `e2e/` → frontend
+- `services/viz-web/`, `services/control-web/` except their `server/` folders, `packages/ui-tokens/`, `e2e/` → frontend
 <!-- agent-team:end -->
 <!-- agent-team:if role_backend -->
-- `services/api/`, `services/propagator/`, `services/ros2-publisher/`, `services/store/` (with its migrations), `services/control-web/server/`, `proto/`, `libs/trajectory-proto/`, `docs/api/` → backend
+- `services/api/`, `services/propagator/`, `services/ros2-publisher/`, `services/store/` (with its migrations), `services/viz-web/server/`, `services/control-web/server/`, `proto/`, `libs/trajectory-proto/`, `docs/api/` → backend
 <!-- agent-team:end -->
 <!-- agent-team:if role_designer -->
 - `docs/design/`, UI review → designer
@@ -77,7 +77,7 @@ its text starts with the service's name in brackets (`[api] ...`).
 | propagator | `services/propagator/` | C++20 | `proto/` (NATS in and out) |
 | ros2-publisher | `services/ros2-publisher/` | C++20, ROS2 Jazzy | `proto/` (NATS in), its ROS2 messages (`services/ros2-publisher/msg/`) |
 | store | `services/store/` | Java 25 | `proto/` (NATS in), the database schema (`services/store/src/main/resources/db/migration/`) |
-| viz-web | `services/viz-web/` | Vue 3, TypeScript | `proto/` through `libs/trajectory-proto`, `docs/api/openapi.yaml` |
+| viz-web | `services/viz-web/` | Vue 3, Node 24 | `proto/` through `libs/trajectory-proto` (NATS in), its server API (`services/viz-web/server/openapi.yaml`), the database schema (read only) |
 | control-web | `services/control-web/` | Vue 3, Node 24 | its server API (`services/control-web/server/openapi.yaml`) |
 | proto | `proto/`, `libs/trajectory-proto/` | Protobuf | the messages themselves |
 A change of one service's contract that another service uses is an alignment
@@ -139,8 +139,8 @@ The contracts are:
   status and history reads).
 - `proto/`: the Protobuf messages on NATS between the services, and the
   subjects they are published on (documented in `proto/README.md`).
-- `services/control-web/server/openapi.yaml`: the API between the control UI
-  and its server.
+- `services/viz-web/server/openapi.yaml` and `services/control-web/server/openapi.yaml`:
+  the APIs between each web UI and its server.
 
 Rules:
 - backend owns them and updates them before or together with the code.

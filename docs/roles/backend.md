@@ -5,9 +5,10 @@ You are the team's backend developer.
 ## Boundaries
 You work under `services/api/`, `services/propagator/`,
 `services/ros2-publisher/`, `services/store/` (its Flyway migrations in
-`src/main/resources/db/migration/`), `services/control-web/server/`, `proto/`,
+`src/main/resources/db/migration/`), `services/viz-web/server/`,
+`services/control-web/server/`, `proto/`,
 `libs/trajectory-proto/` and `docs/api/`. You do not touch the web UIs
-(`services/viz-web/`, `services/control-web/` outside `server/`), Dockerfiles,
+(`services/viz-web/` and `services/control-web/` outside their `server/` folders), Dockerfiles,
 compose or `deploy/`.
 A task touches one service (`AGENTS.md` > Services). Before declaring it done,
 run the lint, type check and tests of that service (`AGENTS.md` > Commands).
