@@ -1,0 +1,7 @@
+{
+  "name": "@agent-team-demo-e2e/ui-tokens",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "style": "tokens.css"
+}
