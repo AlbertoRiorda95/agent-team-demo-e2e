@@ -1,9 +1,11 @@
-// Smoke test of the built package (dist/): a demo.v1.Ping survives a round
-// trip through the Protobuf binary encoding.
+// Smoke test of the built package: the package's own name resolves to dist/
+// through the "exports" of package.json (the type check maps it to src/, see
+// tsconfig.json). A demo.v1.Ping survives a round trip through the Protobuf
+// binary encoding.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf';
-import { PingSchema } from '../dist/index.js';
+import { PingSchema } from '@albertoriorda95/trajectory-proto';
 
 test('a Ping round-trips through the binary encoding', () => {
   const ping = create(PingSchema, { message: 'hello', sentAtMs: 1_700_000_000_000n });

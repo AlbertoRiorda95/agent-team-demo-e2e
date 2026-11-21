@@ -86,12 +86,9 @@ umask 077
 
 case "$kind" in
   npm)
-    # the committed .npmrc may name the registry for the scope; the token goes only in the user's.
-    # From the repository root: inside a workspace folder (a monorepo's PACKAGE_DIR) npm
-    # refuses `npm config` with ENOWORKSPACES; ~/.npmrc is the same file from either folder
-    (cd "$ROOT" &&
-     npm config set --location=user "${REGISTRY_SCOPE:+$REGISTRY_SCOPE:}registry" "$REGISTRY_URL" &&
-     npm config set --location=user "//${REGISTRY_URL#*://}:_authToken" "$TOKEN")
+    # the committed .npmrc may name the registry for the scope; the token goes only in the user's
+    npm config set --location=user "${REGISTRY_SCOPE:+$REGISTRY_SCOPE:}registry" "$REGISTRY_URL"
+    npm config set --location=user "//${REGISTRY_URL#*://}:_authToken" "$TOKEN"
     [ "$action" = publish ] && npm publish --registry "$REGISTRY_URL"
     ;;
   pypi)
