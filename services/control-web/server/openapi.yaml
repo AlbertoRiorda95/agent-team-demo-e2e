@@ -1,0 +1,52 @@
+openapi: 3.1.0
+info:
+  title: control-web server
+  version: 0.0.0
+  description: |
+    The API between the control-web UI and its Node server. Foundations
+    skeleton: only the liveness probe. The services and config routes come
+    with M4 (`docs/design/project.md`).
+servers:
+  - url: http://localhost:5174
+paths:
+  /healthz:
+    get:
+      operationId: getHealthz
+      summary: Liveness probe
+      description: The server process is up and answers HTTP. Used by the Kubernetes probes only.
+      responses:
+        '200':
+          description: The server is up.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '404':
+          description: Unknown route or method (every path of this API).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [ok]
+    Error:
+      type: object
+      required: [statusCode, error, message]
+      properties:
+        statusCode:
+          type: integer
+          example: 404
+        error:
+          type: string
+          example: Not Found
+        message:
+          type: string
+          example: Route GET /nope not found
