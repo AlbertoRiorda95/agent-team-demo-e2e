@@ -86,9 +86,14 @@ umask 077
 
 case "$kind" in
   npm)
-    # the committed .npmrc may name the registry for the scope; the token goes only in the user's
-    npm config set --location=user "${REGISTRY_SCOPE:+$REGISTRY_SCOPE:}registry" "$REGISTRY_URL"
-    npm config set --location=user "//${REGISTRY_URL#*://}:_authToken" "$TOKEN"
+    # the committed .npmrc may name the registry for the scope; the token goes only in the user's.
+    # From the repository root: npm config refuses to run inside a workspace folder
+    # (ENOWORKSPACES), and the user-level file is the same from any folder.
+    (
+      cd "$ROOT"
+      npm config set --location=user "${REGISTRY_SCOPE:+$REGISTRY_SCOPE:}registry" "$REGISTRY_URL"
+      npm config set --location=user "//${REGISTRY_URL#*://}:_authToken" "$TOKEN"
+    )
     [ "$action" = publish ] && npm publish --registry "$REGISTRY_URL"
     ;;
   pypi)
