@@ -1,0 +1,43 @@
+openapi: 3.1.0
+info:
+  title: viz-web server API
+  version: 0.0.0
+  description: >
+    The API between the viz-web UI and its Node server. Foundations skeleton:
+    only the health check. The live view (SSE) and the history routes come
+    with M3 (docs/design/project.md).
+servers:
+  - url: http://localhost:3001
+    description: Local development (VIZ_WEB_SERVER_PORT)
+paths:
+  /healthz:
+    get:
+      operationId: health
+      summary: Liveness and readiness for the probes
+      responses:
+        '200':
+          description: The server is up and every dependency it checks is reachable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+              example:
+                status: ok
+        '503':
+          description: The server is up but a dependency it checks is unreachable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+              example:
+                status: degraded
+components:
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]

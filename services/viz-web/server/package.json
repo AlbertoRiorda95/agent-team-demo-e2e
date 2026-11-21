@@ -1,0 +1,22 @@
+{
+  "name": "@trajectory/viz-web-server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The viz-web server: the API between the viewer UI and NATS / PostgreSQL (server/openapi.yaml).",
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "start": "node src/main.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "fastify": "5.12.8"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "vitest": "5.1.1"
+  }
+}

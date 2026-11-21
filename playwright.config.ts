@@ -5,7 +5,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const apps = [
   { name: 'viz-web', port: 4173 },
-  // control-web joins here with its placeholder page (foundations task 10)
+  { name: 'control-web', port: 4174 },
 ];
 // the breakpoints of the design system: every test runs at each of them
 const viewports = [
