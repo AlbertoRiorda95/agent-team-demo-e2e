@@ -1,0 +1,15 @@
+// Type check of the sources and the tests (no output): `npm run typecheck`.
+// The tests import the package by its own name, as a user does. At run time
+// Node resolves the name to dist/ (the "exports" of package.json); for the type
+// check `paths` maps it to src/, so that neither `npm run typecheck` nor
+// typedoc (ci/reference.sh, which does not build) needs dist/.
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "paths": {
+      "@albertoriorda95/trajectory-proto": ["./src/index.ts"]
+    }
+  },
+  "include": ["src", "test"]
+}

@@ -1,0 +1,24 @@
+# buf.gen.yaml: `npx buf generate` writes the code of proto/ for the four
+# languages. The output is not committed (gen/ is ignored): each service
+# generates it in its build. The remote plugins are pinned: a service links the
+# protobuf runtime of the same version (Python `protobuf`, C++ `protobuf` from
+# Conan, Java `com.google.protobuf:protobuf-java`), because the generated code
+# checks it. TypeScript uses protobuf-es from the root node_modules, at the
+# version of libs/trajectory-proto (which builds with its own TypeScript-only
+# template, libs/trajectory-proto/buf.gen.yaml, so its build needs no network).
+version: v2
+clean: true
+plugins:
+  - remote: buf.build/protocolbuffers/python:v33.1
+    out: gen/python
+  - remote: buf.build/protocolbuffers/pyi:v33.1
+    out: gen/python
+  - remote: buf.build/protocolbuffers/cpp:v33.1
+    out: gen/cpp
+  - remote: buf.build/protocolbuffers/java:v33.1
+    out: gen/java
+  - local: protoc-gen-es
+    out: gen/ts
+    opt:
+      - target=ts
+      - import_extension=js

@@ -1,0 +1,16 @@
+// Build of the package: src/ (with the generated src/gen/) to dist/, with the
+// declarations, as plain ES modules that Node and the bundlers load.
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "sourceMap": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": []
+  },
+  "include": ["src"]
+}

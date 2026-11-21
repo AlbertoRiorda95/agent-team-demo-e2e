@@ -1,0 +1,12 @@
+# buf.yaml: the Protobuf module of this repository (the schemas in proto/).
+# `npx buf lint` and `npx buf breaking --against '.git#branch=main'` run on it
+# (CI job `proto`); `npx buf generate` uses buf.gen.yaml.
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD
+breaking:
+  use:
+    - FILE
