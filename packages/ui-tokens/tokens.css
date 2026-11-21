@@ -1,0 +1,31 @@
+/* Design tokens shared by viz-web and control-web (dark theme).
+   The only place with raw color, spacing and typography values. */
+:root {
+  color-scheme: dark;
+
+  --color-bg: #0b0e13;
+  --color-surface: #141a22;
+  --color-border: #2c3644;
+  --color-fg: #e6ebf2;
+  --color-fg-muted: #9aa7b8;
+  --color-accent: #3ddcf0;
+  --color-burn: #ffb020;
+  --color-danger: #ff6b6b;
+  --color-warning: #ffc247;
+  --color-ok: #4ade80;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --font-body: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --font-size-body: 1rem;
+  --font-size-title: 1.5rem;
+  --line-height-body: 1.5;
+  --radius-1: 4px;
+}
