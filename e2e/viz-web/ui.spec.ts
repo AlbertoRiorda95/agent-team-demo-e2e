@@ -1,4 +1,4 @@
-// e2e/ui.spec.ts: the checks every screen gets. One entry per
+// e2e/viz-web/ui.spec.ts: the checks every screen gets. One entry per
 // screen and state of the specs in docs/design/. Mock the API with page.route()
 // so that every state (loading, empty, error, success) is reachable without a
 // backend. Rename to ui.spec.ts together with playwright.config.ts.
@@ -19,6 +19,8 @@ for (const s of screens) {
     if (s.mock) await s.mock(page);
     await page.goto(s.path);
     await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { level: 1, name: 'Trajectory viewer' })).toBeVisible();
+    await expect(page.getByText('Skeleton: no trajectory yet')).toBeVisible();
 
     // one full-page screenshot per screen and viewport, for the designer's review
     await page.screenshot({ path: info.outputPath(`${s.name}.png`), fullPage: true });

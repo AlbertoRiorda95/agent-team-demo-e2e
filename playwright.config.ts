@@ -1,13 +1,11 @@
 // playwright.config.ts: UI tests for the screens in docs/design/.
-// Rename this file to playwright.config.ts to turn on the `ui` CI job, and add
-// the dev dependencies: npm i -D @playwright/test @axe-core/playwright
 // Two web apps: viz-web (tests in e2e/viz-web/, port 4173) and control-web
 // (tests in e2e/control-web/, port 4174), both served from their built bundle.
 import { defineConfig, devices } from '@playwright/test';
 
 const apps = [
   { name: 'viz-web', port: 4173 },
-  { name: 'control-web', port: 4174 },
+  // control-web joins here with its placeholder page (foundations task 10)
 ];
 // the breakpoints of the design system: every test runs at each of them
 const viewports = [
