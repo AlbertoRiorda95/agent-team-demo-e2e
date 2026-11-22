@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package trajectory.v1;
+
+import "google/protobuf/timestamp.proto";
+import "trajectory/v1/launch.proto";
+
+// One state of the point along its trajectory.
+message Sample {
+  // The flight phase of a sample.
+  enum Phase {
+    // Never sent.
+    PHASE_UNSPECIFIED = 0;
+    // The force is pushing.
+    PHASE_BURN = 1;
+    // Gravity only.
+    PHASE_BALLISTIC = 2;
+  }
+
+  // Index of the sample in the trajectory, from 0.
+  uint32 seq = 1;
+  // Time since the launch, in seconds.
+  double t_s = 2;
+  // East, in metres.
+  double x_m = 3;
+  // North, in metres.
+  double y_m = 4;
+  // Up, in metres.
+  double z_m = 5;
+  // Velocity east, in m/s.
+  double vx_mps = 6;
+  // Velocity north, in m/s.
+  double vy_mps = 7;
+  // Velocity up, in m/s.
+  double vz_mps = 8;
+  // The flight phase at this sample.
+  Phase phase = 9;
+}
+
+// A trajectory computed by the propagator, whole in one message (at most
+// 100000 samples). Subject `trajectories.computed`.
+message TrajectoryComputed {
+  // Why the propagation stopped.
+  enum EndReason {
+    // Never sent.
+    END_REASON_UNSPECIFIED = 0;
+    // The point is back on the ground (z = 0).
+    END_REASON_GROUND = 1;
+    // The propagation time ended first.
+    END_REASON_TIME_LIMIT = 2;
+  }
+
+  // Identifier of the launch (LaunchAccepted.launch_id).
+  string launch_id = 1;
+  // When the api accepted the launch.
+  google.protobuf.Timestamp accepted_at = 2;
+  // When the propagator finished the computation.
+  google.protobuf.Timestamp computed_at = 3;
+  // The launch as requested.
+  LaunchRequest request = 4;
+  // The propagation settings used.
+  PropagationConfig config = 5;
+  // Why the propagation stopped.
+  EndReason end_reason = 6;
+  // Time from the launch to the last sample, in seconds.
+  double flight_time_s = 7;
+  // Highest z reached, in metres.
+  double max_height_m = 8;
+  // Horizontal distance from the start to the last sample, in metres.
+  double range_m = 9;
+  // The samples, in order of seq.
+  repeated Sample samples = 10;
+}
+
+// A trajectory written to the database by the store. Subject
+// `trajectories.stored`.
+message TrajectoryStored {
+  // Identifier of the launch.
+  string launch_id = 1;
+  // When the store committed it.
+  google.protobuf.Timestamp stored_at = 2;
+  // How many samples were written.
+  uint32 sample_count = 3;
+}

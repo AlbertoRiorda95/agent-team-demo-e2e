@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+// The messages of the trajectory pipeline on NATS (docs/design/contracts.md).
+// SI units, frame ENU (x east, y north, z up, origin on the ground), times as
+// google.protobuf.Timestamp, numbers as double. Every enum has a
+// *_UNSPECIFIED = 0 that is never sent: a consumer that reads it rejects the
+// message. The subjects and the streams are in proto/README.md.
+package trajectory.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// A point in the ENU frame, in metres.
+message Position {
+  // East, in metres.
+  double x_m = 1;
+  // North, in metres.
+  double y_m = 2;
+  // Up, in metres (0 is the ground).
+  double z_m = 3;
+}
+
+// A launch as the user asked for it: the body of `POST /launches`
+// (docs/api/openapi.yaml, schema LaunchRequest), already validated by the api.
+message LaunchRequest {
+  // Mass of the point, in kilograms (> 0).
+  double mass_kg = 1;
+  // Where the point starts.
+  Position position = 2;
+  // Direction of the force in the horizontal plane, clockwise from north, in
+  // degrees ([0, 360)).
+  double azimuth_deg = 3;
+  // Angle of the force above the horizon, in degrees ((0, 90)).
+  double elevation_deg = 4;
+  // Magnitude of the force, in newtons (> 0).
+  double force_n = 5;
+  // How long the force pushes, in seconds (> 0).
+  double burn_duration_s = 6;
+}
+
+// The propagation settings a trajectory was (or will be) computed with.
+message PropagationConfig {
+  // How long the propagation runs at most, in seconds.
+  double propagation_time_s = 1;
+  // Time between two samples, in seconds. propagation_time_s / sample_step_s
+  // is at most 100000 (the sample cap, proto/README.md).
+  double sample_step_s = 2;
+  // Magnitude of the gravity acceleration, in m/s^2 (pointing down, -z).
+  double gravity_mps2 = 3;
+  // Version of the config in force (ConfigSet.config_version); 0 means the
+  // defaults.
+  uint64 config_version = 4;
+}
+
+// A launch accepted by the api. Subject `launches.accepted`.
+message LaunchAccepted {
+  // Identifier of the launch, a UUID string; also the Nats-Msg-Id header.
+  string launch_id = 1;
+  // When the api accepted the launch.
+  google.protobuf.Timestamp accepted_at = 2;
+  // The launch as requested.
+  LaunchRequest request = 3;
+  // The propagation settings to compute it with.
+  PropagationConfig config = 4;
+}
