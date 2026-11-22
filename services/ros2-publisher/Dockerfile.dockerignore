@@ -1,0 +1,6 @@
+# Context is the repository root: send only what services/ros2-publisher/Dockerfile copies.
+*
+!services/ros2-publisher/package.xml
+!services/ros2-publisher/CMakeLists.txt
+!services/ros2-publisher/include/
+!services/ros2-publisher/src/
