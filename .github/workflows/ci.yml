@@ -84,7 +84,13 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.base_ref }}
-        run: npx buf breaking --against ".git#branch=origin/${BASE_REF}"
+        run: |
+          # no .proto on the base branch yet (the first proto PR): nothing to compare with
+          if git ls-tree -r --name-only "origin/${BASE_REF}" | grep -q '\.proto$'; then
+            npx buf breaking --against ".git#branch=origin/${BASE_REF}"
+          else
+            echo "No .proto files on ${BASE_REF}: skipping buf breaking"
+          fi
 
   api:
     needs: changes
