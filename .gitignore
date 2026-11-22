@@ -25,3 +25,5 @@ CMakeUserPresets.json
 # colcon (services/ros2-publisher)
 install/
 log/
+# buf generate output of buf.gen.yaml (each service generates its own)
+/gen/
