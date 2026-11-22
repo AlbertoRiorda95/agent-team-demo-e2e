@@ -1,0 +1,9 @@
+# Context is the repository root: send only what services/api/Dockerfile copies.
+*
+!services/api/pyproject.toml
+!services/api/uv.lock
+!services/api/README.md
+!services/api/.python-version
+!services/api/src/
+**/__pycache__
+**/*.pyc
