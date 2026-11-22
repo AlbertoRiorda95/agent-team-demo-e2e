@@ -1,4 +1,4 @@
-- [CI sandbox limits](project_ci-sandbox-limits.md) — permissions vary per run (docker worked 2026-11-22); hook blocks commands naming the dotenv file
+- [CI sandbox limits](project_ci-sandbox-limits.md) — permissions vary per run (docker worked, npm blocked on some runs); hook blocks commands naming the dotenv file
 - [Image vuln gate](project_image-vuln-gate.md) — trivy image gate fails Debian bases; use ubuntu:24.04/alpine, strip npm/pip
 - [buf binary in grype](project_buf-binary-grype.md) — vulnerabilities job scans Go modules inside @bufbuild/buf's binary (PR #54)
 - [Workflow push blocked](project_workflow-push-blocked.md) — CI token can't push .github/workflows/ changes; use --body-file for gh text
