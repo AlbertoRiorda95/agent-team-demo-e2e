@@ -3,9 +3,12 @@
 // (tests in e2e/control-web/, port 4174), both served from their built bundle.
 import { defineConfig, devices } from '@playwright/test';
 
+// `workspace` is the npm package name: `-w services/<app>` would also select
+// the workspaces nested in that folder (services/viz-web/server), which have
+// no build or preview script.
 const apps = [
-  { name: 'viz-web', port: 4173 },
-  { name: 'control-web', port: 4174 },
+  { name: 'viz-web', workspace: '@agent-team-demo-e2e/viz-web', port: 4173 },
+  { name: 'control-web', workspace: '@agent-team-demo-e2e/control-web', port: 4174 },
 ];
 // the breakpoints of the design system: every test runs at each of them
 const viewports = [
@@ -25,7 +28,7 @@ export default defineConfig({
     use: { ...devices['Desktop Chrome'], viewport: v.viewport, hasTouch: v.touch, baseURL: `http://localhost:${app.port}` },
   }))),
   webServer: apps.map(app => ({
-    command: `npm run build -w services/${app.name} && npm run preview -w services/${app.name} -- --port ${app.port} --strictPort`,
+    command: `npm run build -w ${app.workspace} && npm run preview -w ${app.workspace} -- --port ${app.port} --strictPort`,
     url: `http://localhost:${app.port}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
