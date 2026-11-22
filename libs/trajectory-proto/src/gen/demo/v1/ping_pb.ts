@@ -3,8 +3,9 @@
 /* eslint-disable */
 
 // Placeholder package of the foundations milestone: it proves the generation
-// for Python, C++, Java and TypeScript. The real schemas come with the M1
-// contracts; this package can be removed then.
+// for Python, C++, Java and TypeScript. Deprecated: the messages of the
+// pipeline are in trajectory.v1. It is removed by a later contract task, once
+// nothing uses it.
 
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
@@ -14,12 +15,13 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file demo/v1/ping.proto.
  */
 export const file_demo_v1_ping: GenFile = /*@__PURE__*/
-  fileDesc("ChJkZW1vL3YxL3BpbmcucHJvdG8SB2RlbW8udjEiKwoEUGluZxIPCgdtZXNzYWdlGAEgASgJEhIKCnNlbnRfYXRfbXMYAiABKANiBnByb3RvMw");
+  fileDesc("ChJkZW1vL3YxL3BpbmcucHJvdG8SB2RlbW8udjEiLwoEUGluZxIPCgdtZXNzYWdlGAEgASgJEhIKCnNlbnRfYXRfbXMYAiABKAM6AhgBYgZwcm90bzM");
 
 /**
  * A placeholder message with no meaning in the product.
  *
  * @generated from message demo.v1.Ping
+ * @deprecated
  */
 export type Ping = Message<"demo.v1.Ping"> & {
   /**
@@ -40,6 +42,7 @@ export type Ping = Message<"demo.v1.Ping"> & {
 /**
  * Describes the message demo.v1.Ping.
  * Use `create(PingSchema)` to create a new message.
+ * @deprecated
  */
 export const PingSchema: GenMessage<Ping> = /*@__PURE__*/
   messageDesc(file_demo_v1_ping, 0);
