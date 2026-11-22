@@ -1,0 +1,4 @@
+# clang-format style of the propagator (checked with clang-format --dry-run --Werror).
+BasedOnStyle: Google
+ColumnLimit: 100
+IncludeBlocks: Preserve
