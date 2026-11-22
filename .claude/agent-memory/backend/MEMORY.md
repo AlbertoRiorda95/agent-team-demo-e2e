@@ -1,3 +1,3 @@
-- [CI runner environment](project_ci-runner-env.md) — network, missing protoc, buf postinstall quirk on the agent runner
+- [CI runner environment](project_ci-runner-env.md) — network, missing protoc/ROS2, Docker available, buf postinstall quirk
 - [Web workspace manifest](project_web-workspace-manifest.md) — server tasks may precede the UI task; backend creates a minimal package.json + alignment entry
 - [Web server workspaces](project_web_server_workspaces.md) — *-web/server packages need devops to add them to root workspaces
