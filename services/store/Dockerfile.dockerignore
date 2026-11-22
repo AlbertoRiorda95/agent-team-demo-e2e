@@ -1,0 +1,7 @@
+# Context is the repository root: send only what services/store/Dockerfile copies.
+*
+!services/store/gradlew
+!services/store/settings.gradle.kts
+!services/store/build.gradle.kts
+!services/store/gradle/
+!services/store/src/main/
