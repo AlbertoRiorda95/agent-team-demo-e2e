@@ -7,6 +7,7 @@
   },
   "workspaces": [
     "services/viz-web",
+    "services/viz-web/server",
     "services/control-web",
     "libs/trajectory-proto",
     "packages/ui-tokens"

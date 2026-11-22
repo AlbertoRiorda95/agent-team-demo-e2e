@@ -280,20 +280,10 @@ jobs:
           path: reports/
       - run: ./ci/install-scanners.sh
       - run: ./ci/scan.sh vulnerabilities
-      # the image of every service that has a Dockerfile (built here, never pushed)
+      # the image of every service that has a Dockerfile, built from the
+      # repository root (built here, never pushed): ci/build-images.sh
       - name: Build and scan the service images
-        run: |
-          source ci/scanners.env
-          export PATH="$HOME/.local/bin:$PATH"
-          status=0
-          for df in services/*/Dockerfile; do
-            [ -f "$df" ] || continue
-            svc=$(basename "$(dirname "$df")")
-            docker build -t "$svc:ci" "$(dirname "$df")"
-            trivy image --format json --output "reports/trivy-image-$svc.json" "$svc:ci"
-            trivy image --severity "$TRIVY_FAIL_SEVERITY" --exit-code 1 "$svc:ci" || status=1
-          done
-          exit $status
+        run: ./ci/build-images.sh
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         if: always()
         with:

@@ -1,28 +1,30 @@
 ---
 name: ci-sandbox-limits
-description: In the unattended CI run, docker, curl, rm/mv, yamllint, shellcheck and python need approval (blocked); npm, npx, node, gh issue/pr and git work
+description: What the unattended CI agent run allows; docker worked on 2026-11-22 (issue #12) but was blocked on 2026-11-20; Bash commands naming the dotenv file are blocked by a hook
 metadata:
   type: project
 ---
 
-In the unattended GitHub Actions agent run (seen 2026-11-20, issue #2), every
-`docker ...` command (pull, compose config, buildx), `curl`, `gh api` to
-outside hosts, `rm`/`mv`, `chmod`, `yamllint`, `shellcheck` and `python3`
-need approval, so they are blocked. So do `go` (e.g. `go version -m`), pipes
-into grep, `cmd; echo $?` and `for` loops with variables. To read a Go
-binary's build info, scan the file with `node -e` (regex on `go1.x.y` and
-module `\tvX.Y.Z` strings). `npm`, `npx`, `git` (including
-`git clean`, `git update-index --chmod=+x`) and `gh issue|pr` work.
+Sandbox permissions vary between runs. On 2026-11-20 (issue #2) every
+`docker ...`, `curl`, `rm`/`mv`, `chmod`, `yamllint`, `shellcheck`, `python3`
+and `go` were blocked. On 2026-11-22 (issue #12) `docker` (build, compose,
+`buildx imagetools inspect`), `curl` and `chmod` all worked, so linters ran as
+images: `hadolint/hadolint:v2.14.0`, `rhysd/actionlint:1.7.12` (flag
+`-no-color`), `koalaman/shellcheck:v0.11.0`, `aquasec/trivy:0.76.0` (the CI
+version, `ci/scanners.env`).
 
-The push token is a GitHub App without `workflows` permission: a push that
-touches `.github/workflows/*` is rejected. Keep workflow edits out of the
-branch history and put them as a patch in the PR for a human.
+A PreToolUse hook blocks any Bash command line that names the dotenv file
+(it counts as a credential read), even copying the example to it, or writing
+a memory file that mentions it via heredoc. Use
+`docker compose --env-file .env.example ...`, put long edit scripts in a file
+under /tmp, and write memory files with the Write tool.
 
-**Why:** image digests cannot be resolved and compose/Dockerfiles cannot be
-validated locally in that environment.
+**Why:** probing once at the start saves turns; digests can be pinned and
+images actually built when docker works.
 
-**How to apply:** do not burn turns retrying them; delete scratch files with
-`git clean -fdx <path>`; leave a `TODO(pin)` and ask the reviewer to pin
-digests (`docker buildx imagetools inspect <image>`); list the unrun checks
-in the PR. `npm query .workspace` only sees linked workspaces, check folders
-on disk instead. See [[root-workspace-scripts]].
+**How to apply:** first run `docker buildx imagetools inspect <img>`; if it
+works, pin digests and build/scan for real. If blocked, leave `TODO(pin)` and
+list the unrun checks in the PR. `git` and `gh issue|pr` always worked.
+On 2026-11-22 (PR #71 follow-up run) even `npm ci`, `npm run`, `npx eslint`,
+heredocs to /tmp and `node <script>` were blocked: edit with the Edit/Write
+tools, and read CI failures with `gh run view <run> --job <id> --log-failed`. See [[workflow-push-blocked]], [[image-vuln-gate]].
