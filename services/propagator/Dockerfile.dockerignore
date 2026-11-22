@@ -1,0 +1,7 @@
+# Context is the repository root: send only what services/propagator/Dockerfile copies.
+*
+!services/propagator/conanfile.py
+!services/propagator/CMakeLists.txt
+!services/propagator/CMakePresets.json
+!services/propagator/include/
+!services/propagator/src/
