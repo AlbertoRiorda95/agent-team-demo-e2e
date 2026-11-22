@@ -1,0 +1,10 @@
+# Context is the repository root: send only what services/control-web/Dockerfile copies.
+*
+!package.json
+!package-lock.json
+!services/viz-web/package.json
+!services/viz-web/server/package.json
+!services/control-web/package.json
+!services/control-web/server/src/
+!libs/trajectory-proto/package.json
+!packages/ui-tokens/package.json
