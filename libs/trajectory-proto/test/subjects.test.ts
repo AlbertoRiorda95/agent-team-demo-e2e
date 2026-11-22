@@ -21,14 +21,15 @@ function documentedSubjects(): Map<string, string> {
   const rows = new Map<string, string>();
   for (const line of section.split('\n')) {
     const match = /^\| `([^`]+)` \| `([^`]+)` \|/.exec(line);
-    if (match) rows.set(match[1], match[2]);
+    if (match?.[1] && match[2]) rows.set(match[1], match[2]);
   }
   return rows;
 }
 
 function documentedServiceNames(): string[] {
-  const line = readme.split('\n').find((l) => l.startsWith('Service names on the subjects:'));
-  return [...(line ?? '').matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+  // the sentence may wrap: read up to its full stop
+  const sentence = /Service names on the subjects:([^.]*)\./.exec(readme)?.[1] ?? '';
+  return [...sentence.matchAll(/`([^`]+)`/g)].map((m) => m[1] ?? '');
 }
 
 describe('NATS subjects', () => {
