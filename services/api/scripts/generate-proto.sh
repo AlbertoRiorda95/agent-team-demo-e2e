@@ -16,7 +16,7 @@ npx --no-install buf generate --template services/api/buf.gen.yaml --output "$tm
 touch "$tmp/python/trajectory/__init__.py" "$tmp/python/trajectory/v1/__init__.py"
 
 if [[ "${1:-}" == "--check" ]]; then
-  if ! diff -r "$tmp/python/trajectory" "$target"; then
+  if ! diff -r --exclude=__pycache__ "$tmp/python/trajectory" "$target"; then
     echo "services/api/src/trajectory is not in step with proto/: run services/api/scripts/generate-proto.sh and commit it" >&2
     exit 1
   fi
