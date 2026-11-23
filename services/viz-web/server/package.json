@@ -13,10 +13,15 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@albertoriorda95/trajectory-proto": "0.1.0",
+    "@bufbuild/protobuf": "2.17.0",
+    "@nats-io/jetstream": "3.5.0",
+    "@nats-io/transport-node": "3.5.0",
     "fastify": "5.12.8"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
+    "testcontainers": "12.2.2",
     "vitest": "5.1.1"
   }
 }
