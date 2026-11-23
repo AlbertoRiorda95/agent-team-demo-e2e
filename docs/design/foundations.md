@@ -96,6 +96,7 @@ Breaking for existing clients: no
 - 2026-11-20 — The root `package.json` (npm workspaces, shared scripts, buf) and `compose.yml` are devops's and come first — every other row builds on them, no two roles edit them.
 - 2026-11-20 — One row per service: each service's skeleton is its own task — monorepo rule, parallel work.
 - 2026-11-20 — Placeholder `demo.v1.Ping` instead of real schemas — M1 contracts owns the messages.
+- 2026-11-23 — Services without an HTTP server (propagator, store, ros2-publisher) get a process-liveness container healthcheck only (`kill -0 1`), no probe endpoint and no extra port; "each health check answers ok" and the 503 `degraded` case apply to api, viz-web and control-web. Their degraded state is the `status.<service>` heartbeat of project.md (one status path) — no HTTP library or health file for three services, and no new port.
 
 ## Open questions
 - (none)
