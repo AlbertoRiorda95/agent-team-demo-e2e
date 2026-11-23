@@ -1,6 +1,6 @@
 {
   "name": "@albertoriorda95/trajectory-proto",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "TypeScript types of the Protobuf messages of agent-team-demo-e2e, generated from proto/ with protobuf-es.",
   "license": "UNLICENSED",
   "type": "module",
@@ -28,13 +28,14 @@
     "build": "npm run generate && tsc -p tsconfig.build.json",
     "typecheck": "npm run generate && tsc -p tsconfig.json",
     "check-generated": "test -z \"$(git status --porcelain -- src/gen)\" || { echo \"src/gen is not in step with proto/: run npm run generate and commit it\" >&2; git status --porcelain -- src/gen >&2; exit 1; }",
-    "test": "npm run build && npm run check-generated && node --test test/*.test.ts"
+    "test": "npm run build && npm run check-generated && vitest run"
   },
   "dependencies": {
     "@bufbuild/protobuf": "2.17.0"
   },
   "devDependencies": {
     "@bufbuild/protoc-gen-es": "2.17.0",
-    "@types/node": "24.19.2"
+    "@types/node": "24.19.2",
+    "vitest": "5.1.1"
   }
 }

@@ -1,12 +1,15 @@
 syntax = "proto3";
 
 // Placeholder package of the foundations milestone: it proves the generation
-// for Python, C++, Java and TypeScript. The real schemas come with the M1
-// contracts; this package can be removed then.
+// for Python, C++, Java and TypeScript. Deprecated: the messages of the
+// pipeline are in trajectory.v1. It is removed by a later contract task, once
+// nothing uses it.
 package demo.v1;
 
 // A placeholder message with no meaning in the product.
 message Ping {
+  option deprecated = true;
+
   // Free text, echoed back by whoever answers.
   string message = 1;
   // When the ping was sent, in milliseconds since the Unix epoch.

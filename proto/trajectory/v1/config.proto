@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package trajectory.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// The runtime config of the propagator.
+message PropagatorConfig {
+  // How long the propagation runs at most, in seconds.
+  double propagation_time_s = 1;
+  // Time between two samples, in seconds; propagation_time_s / sample_step_s
+  // is at most 100000 (checked where the config is set).
+  double sample_step_s = 2;
+}
+
+// A new config for a service, published by control-web. Subject
+// `config.<service>.set` (stream CONFIG keeps the latest per subject).
+message ConfigSet {
+  // The service name (as on the subject).
+  string service = 1;
+  // The version of this config, increasing; 0 is reserved for the defaults.
+  uint64 config_version = 2;
+  // The config of the service. The store and ros2-publisher payloads are
+  // added later as new fields.
+  oneof payload {
+    // The propagator config.
+    PropagatorConfig propagator = 3;
+  }
+}
+
+// The answer of a service instance to a ConfigSet. Subject
+// `config.<service>.applied`.
+message ConfigApplied {
+  // The service name (as on the subject).
+  string service = 1;
+  // The instance: host or pod name.
+  string instance = 2;
+  // The version of the config now in force.
+  uint64 config_version = 3;
+  // Whether the requested config was applied.
+  bool ok = 4;
+  // Why it was not applied; empty when ok.
+  string error = 5;
+  // When the instance applied it (or refused it).
+  google.protobuf.Timestamp applied_at = 6;
+  // The config now in force (the same payload as ConfigSet).
+  oneof payload {
+    // The propagator config.
+    PropagatorConfig propagator = 7;
+  }
+}

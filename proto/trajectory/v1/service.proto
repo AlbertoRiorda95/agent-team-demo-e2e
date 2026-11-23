@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package trajectory.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// An error of a service of the pipeline, for example a message it rejected.
+// Subject `pipeline.errors`.
+message PipelineError {
+  // Identifier of the launch; empty when unknown (a message that did not
+  // decode).
+  string launch_id = 1;
+  // The service that saw the error (`api`, `propagator`, `ros2-publisher`,
+  // `store`, `viz-web`, `control-web`).
+  string service = 2;
+  // The NATS subject where it happened.
+  string subject = 3;
+  // What went wrong, for a human.
+  string message = 4;
+  // When it happened.
+  google.protobuf.Timestamp occurred_at = 5;
+}
+
+// The heartbeat of a service instance, every 5 s on core NATS (no stream).
+// Subject `status.<service>`.
+message ServiceStatus {
+  // The health of an instance.
+  enum State {
+    // Never sent.
+    STATE_UNSPECIFIED = 0;
+    // Working.
+    STATE_OK = 1;
+    // Working with a problem (see detail).
+    STATE_DEGRADED = 2;
+    // Not working (see detail).
+    STATE_DOWN = 3;
+  }
+
+  // The service name (as on the subject).
+  string service = 1;
+  // The instance: host or pod name.
+  string instance = 2;
+  // The health of the instance.
+  State state = 3;
+  // A short explanation of the state, for a human; may be empty when OK.
+  string detail = 4;
+  // The version of the service.
+  string version = 5;
+  // The config version in force (0 = the defaults).
+  uint64 config_version = 6;
+  // When the heartbeat was sent.
+  google.protobuf.Timestamp sent_at = 7;
+}
