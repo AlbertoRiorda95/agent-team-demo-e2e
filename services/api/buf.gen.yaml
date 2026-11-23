@@ -1,0 +1,18 @@
+# services/api/buf.gen.yaml: the Python code of the trajectory.v1 messages for
+# the api. It is committed under src/trajectory/v1/ so the api builds (uv,
+# Docker) without buf or network access, like libs/trajectory-proto/src/gen.
+# Do not run it directly: run scripts/generate-proto.sh (writes the code) or
+# scripts/generate-proto.sh --check (fails when the committed code is not in
+# step with proto/). Same remote plugins and version as the root
+# buf.gen.yaml (protobuf v33.1): the `protobuf` runtime in pyproject.toml
+# stays on 6.33.x.
+version: v2
+inputs:
+  - directory: proto
+    paths:
+      - proto/trajectory
+plugins:
+  - remote: buf.build/protocolbuffers/python:v33.1
+    out: python
+  - remote: buf.build/protocolbuffers/pyi:v33.1
+    out: python

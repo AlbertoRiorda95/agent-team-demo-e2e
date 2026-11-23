@@ -11,5 +11,7 @@ No ROS2 on the runner, but Docker works (2026-11-22, issue #6): build and test r
 Streams: `docker run natsio/nats-box` with `nats stream add --config <json>` against `nats:2-alpine -js` on a docker network verifies `proto/nats/streams/` (2026-11-22, issue #32).
 Java: Temurin 25 (and 11/17/21) in `/usr/lib/jvm` plus a system Gradle 9.9; Maven Central and services.gradle.org reachable, so `./gradlew build` with Testcontainers (postgres, nats images) runs on the host (2026-11-22, issue #7).
 
+Python testcontainers (2026-11-23, issue #14): Docker on the runner holds published ports without a listening socket, so a kernel "free port" can collide with a Docker-assigned one; pick fixed host ports below 32768. `DockerContainer.__enter__` calls `start()` itself: never `with c.start()`.
+
 **Why:** decides whether generation can use buf remote plugins, whether local tools must come from npm, and how to verify toolchains that are missing on the host.
 **How to apply:** prefer npm-provided plugins (protoc-gen-es) for steps that CI jobs without network-sensitive setup run; remote plugins are fine for `npx buf generate` at the root. For missing toolchains (ROS2), try the CI job's container image with Docker. See [[proto-toolchain]] in proto/README.md for the pinned protobuf version.
