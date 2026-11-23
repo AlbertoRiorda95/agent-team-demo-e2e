@@ -27,3 +27,5 @@ requests are rejected with `429` for 5 minutes. Everything runs on Kubernetes
 
 The project is built by an agent team: see `AGENTS.md`, the specs in
 `docs/design/` and the software documentation in `docs/software/`.
+
+Interfaces between the services and with the outside: `docs/software/icd.md`.
