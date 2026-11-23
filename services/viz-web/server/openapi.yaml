@@ -1,19 +1,57 @@
 openapi: 3.1.0
 info:
   title: viz-web server API
-  version: 0.0.0
+  version: 0.1.0
   description: >
-    The API between the viz-web UI and its Node server. Foundations skeleton:
-    only the health check. The live view (SSE) and the history routes come
-    with M3 (docs/design/project.md).
+    The API between the viz-web UI and its Node server. M1 skeleton
+    (docs/design/viz-backend.md): the health check and the in-memory record of
+    the launches accepted on NATS (`launches.accepted`). The live view (SSE)
+    and the history routes come with M3 (docs/design/viewer.md).
 servers:
   - url: http://localhost:3001
     description: Local development (VIZ_WEB_SERVER_PORT)
 paths:
+  /api/accepted-launches:
+    get:
+      operationId: listAcceptedLaunches
+      summary: The launches accepted on NATS, newest first
+      description: >
+        The in-memory record of the `trajectory.v1.LaunchAccepted` messages
+        read from `launches.accepted` (stream `LAUNCHES`), newest first in
+        stream order, one entry per launch_id (the first one received stays),
+        at most 1000 entries (the oldest are dropped). The record is rebuilt
+        from the stream at start-up, so right after a restart it can be empty
+        or partial until the replay catches up. It is not a history: it keeps
+        what the stream still holds (7 days). No query parameters, no
+        pagination.
+      responses:
+        '200':
+          description: The record; `[]` when no launch has been accepted yet.
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 1000
+                items:
+                  $ref: '#/components/schemas/AcceptedLaunch'
+              example:
+                - launch_id: 6f1c2a52-8a43-4d61-9a0e-5b1d1b8f6c21
+                  accepted_at: '2026-11-23T10:15:30.250Z'
+                  request:
+                    mass_kg: 1
+                    position: { x_m: 0, y_m: 0, z_m: 0 }
+                    azimuth_deg: 45
+                    elevation_deg: 60
+                    force_n: 100
+                    burn_duration_s: 0.5
   /healthz:
     get:
       operationId: health
-      summary: Liveness and readiness for the probes
+      summary: Liveness for the probes
+      description: >
+        Plain liveness: `degraded` (503) while the NATS subscription to
+        `launches.accepted` is down, `ok` (200) otherwise. It does not wait for
+        the start-up replay of the record.
       responses:
         '200':
           description: The server is up and every dependency it checks is reachable.
@@ -41,3 +79,28 @@ components:
         status:
           type: string
           enum: [ok, degraded]
+    AcceptedLaunch:
+      type: object
+      required: [launch_id, accepted_at, request]
+      additionalProperties: false
+      properties:
+        launch_id:
+          type: string
+          format: uuid
+          description: The launch_id of the `LaunchAccepted` message.
+        accepted_at:
+          type: string
+          format: date-time
+          description: When the api accepted the launch (RFC 3339, UTC).
+        request:
+          $ref: '#/components/schemas/LaunchRequest'
+    LaunchRequest:
+      type: object
+      description: >
+        The `trajectory.v1.LaunchRequest` of the message (proto/trajectory/v1/launch.proto)
+        in proto3 JSON with the proto field names (snake_case), as written by
+        `toJson` of `@bufbuild/protobuf` with `useProtoFieldName` and
+        `alwaysEmitImplicit` (every field present, zeros included). It decodes
+        with `fromJson` of the same library. The proto message is the
+        reference for its fields; they are not duplicated here.
+      additionalProperties: true
