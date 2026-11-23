@@ -5,7 +5,7 @@ import asyncio
 from fastapi.testclient import TestClient
 from openapi_core import OpenAPI
 
-from tests.conftest import FakeBus, assert_matches_contract, make_client
+from tests.conftest import FakeBus, FakeClock, assert_matches_contract, make_client
 from trajectory_api.adapters.nats_bus import NatsBus
 
 
@@ -34,7 +34,7 @@ def test_healthz_is_degraded_without_nats(
 
 
 def test_lifespan_starts_and_stops_the_bus() -> None:
-    bus = FakeBus()
+    bus = FakeBus(FakeClock())
 
     with make_client(bus):
         assert bus.started
