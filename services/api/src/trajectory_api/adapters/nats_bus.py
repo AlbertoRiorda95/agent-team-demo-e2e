@@ -3,15 +3,19 @@
 The service never crashes because NATS is down: start-up connects in the
 background, retrying with exponential backoff, and the health check reports
 `degraded` until the connection is up. Once connected, nats-py reconnects on its
-own; `is_connected` follows it.
+own; `is_connected` follows it. The callbacks given to `on_connected` run
+after the first connection and after every reconnection.
 """
 
 import asyncio
 import contextlib
 import logging
+from collections.abc import Awaitable, Callable
 
 import nats
 from nats.aio.client import Client
+
+from trajectory_api.application.ports import BusUnavailableError
 
 logger = logging.getLogger(__name__)
 
@@ -31,10 +35,23 @@ class NatsBus:
         self._connect_timeout_s = connect_timeout_s
         self._client: Client | None = None
         self._task: asyncio.Task[None] | None = None
+        self._on_connected: list[Callable[[], Awaitable[object]]] = []
+        self._callbacks: set[asyncio.Task[None]] = set()
 
     @property
     def is_connected(self) -> bool:
         return self._client is not None and self._client.is_connected
+
+    @property
+    def client(self) -> Client:
+        """The connected client; raises BusUnavailableError when not connected."""
+        if self._client is None or not self._client.is_connected:
+            raise BusUnavailableError("not connected to NATS")
+        return self._client
+
+    def on_connected(self, callback: Callable[[], Awaitable[object]]) -> None:
+        """Runs `callback` after the connection is up, and again after each reconnection."""
+        self._on_connected.append(callback)
 
     async def start(self) -> None:
         """Starts connecting in the background; returns at once."""
@@ -44,6 +61,8 @@ class NatsBus:
         self._task = asyncio.create_task(self._connect_with_backoff(self._url))
 
     async def stop(self) -> None:
+        for callback in list(self._callbacks):
+            callback.cancel()
         if self._task is not None:
             self._task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -85,7 +104,19 @@ class NatsBus:
                 backoff_s = min(backoff_s * 2, self._max_backoff_s)
             else:
                 logger.info("connected to NATS", extra={"event": "nats", "attempt": attempt})
+                await self._run_on_connected()
                 return
+
+    async def _run_on_connected(self) -> None:
+        for callback in self._on_connected:
+            try:
+                await callback()
+            except asyncio.CancelledError:
+                raise
+            except Exception as error:  # a failing hook must not stop the connection
+                logger.error(
+                    "on-connected hook failed", extra={"event": "nats", "error": repr(error)}
+                )
 
     async def _on_error(self, error: Exception) -> None:
         logger.error("NATS error", extra={"event": "nats", "error": repr(error)})
@@ -95,3 +126,7 @@ class NatsBus:
 
     async def _on_reconnected(self) -> None:
         logger.info("reconnected to NATS", extra={"event": "nats"})
+        # not awaited here: the hooks talk to NATS, the callback runs inside its client
+        task = asyncio.create_task(self._run_on_connected())
+        self._callbacks.add(task)
+        task.add_done_callback(self._callbacks.discard)

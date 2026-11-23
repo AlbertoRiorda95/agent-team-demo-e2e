@@ -7,6 +7,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
+# Standard gravity, m/s^2: the only gravity of the demo (docs/design/launch-intake.md).
+STANDARD_GRAVITY_MPS2 = 9.80665
+
 
 @dataclass(frozen=True, slots=True)
 class Position:
@@ -26,7 +29,61 @@ class Launch:
 
 
 @dataclass(frozen=True, slots=True)
+class PropagationConfig:
+    """The settings a launch is propagated with; version 0 means the defaults."""
+
+    propagation_time_s: float
+    sample_step_s: float
+    gravity_mps2: float
+    config_version: int
+
+
+DEFAULT_CONFIG = PropagationConfig(
+    propagation_time_s=60.0,
+    sample_step_s=0.01,
+    gravity_mps2=STANDARD_GRAVITY_MPS2,
+    config_version=0,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class AppliedConfig:
+    """The latest config the propagator reported as applied (`config.propagator.applied`).
+
+    `propagation_time_s` and `sample_step_s` are None when the report carries no
+    propagator payload.
+    """
+
+    ok: bool
+    config_version: int
+    propagation_time_s: float | None
+    sample_step_s: float | None
+
+
+def config_snapshot(applied: AppliedConfig | None) -> PropagationConfig:
+    """The config attached to an accepted launch: the one in force, or the defaults.
+
+    No report, a refused one (`ok` false) or one without a propagator payload
+    gives the defaults. Gravity is always standard gravity.
+    """
+    if (
+        applied is None
+        or not applied.ok
+        or applied.propagation_time_s is None
+        or applied.sample_step_s is None
+    ):
+        return DEFAULT_CONFIG
+    return PropagationConfig(
+        propagation_time_s=applied.propagation_time_s,
+        sample_step_s=applied.sample_step_s,
+        gravity_mps2=STANDARD_GRAVITY_MPS2,
+        config_version=applied.config_version,
+    )
+
+
+@dataclass(frozen=True, slots=True)
 class AcceptedLaunch:
     launch_id: UUID
     accepted_at: datetime
     launch: Launch
+    config: PropagationConfig
