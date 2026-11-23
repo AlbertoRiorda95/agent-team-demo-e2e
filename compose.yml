@@ -21,8 +21,12 @@ services:
     image: nats:2-alpine@sha256:558394a23dd3c36f2d3a64b51865fd09908010e80a542cea5e75c2af543ed62a  # nats-server 2.15.3
     user: "65534:65534"          # nobody: NATS needs no privilege
     read_only: true
-    # JetStream on, stored in /data; monitoring port 8222 (/healthz)
-    command: ["--jetstream", "--store_dir", "/data", "--http_port", "8222"]
+    # settings in deploy/nats/nats.conf (max_payload has no CLI flag)
+    command: ["--config", "/etc/nats/nats.conf"]
+    configs:
+      - source: nats-conf
+        target: /etc/nats/nats.conf
+        mode: 0444
     ports:
       - "127.0.0.1:${NATS_PORT:-4222}:4222"
       - "127.0.0.1:${NATS_MONITOR_PORT:-8222}:8222"
@@ -49,6 +53,44 @@ services:
         limits:
           cpus: "0.5"
           memory: 512M
+
+  # Creates the JetStream streams of proto/nats/streams/ (proto/README.md >
+  # Streams), then exits 0; the services start only after it succeeded.
+  # A stream that already exists is left as it is, so it can run again
+  # (`docker compose up` after a `stop`). Re-run by hand: `docker compose up nats-init`.
+  nats-init:
+    <<: *hardening
+    image: natsio/nats-box:0.20.2-nonroot@sha256:d00bffed51ea1a29e58852698bde37020d306af55585882f88dbcf09dd86f5fe  # nats CLI 0.5.1, uid 1000
+    restart: "no"                # one-shot job
+    read_only: true
+    environment:
+      NATS_URL: nats://nats:4222
+    volumes:
+      - type: bind
+        source: ./proto/nats/streams
+        target: /streams
+        read_only: true
+    entrypoint: ["/bin/sh", "-euc"]
+    command:
+      - |
+        for f in /streams/*.json; do
+          name=$$(basename "$$f" .json)
+          if nats stream info "$$name" >/dev/null 2>&1; then
+            echo "stream $$name exists, left unchanged"
+          else
+            nats stream add --config "$$f" >/dev/null
+            echo "stream $$name created"
+          fi
+        done
+        nats stream ls
+    depends_on:
+      nats:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
 
   postgres:
     <<: *hardening
@@ -96,8 +138,8 @@ services:
     tmpfs:
       - /tmp
     depends_on:
-      nats:
-        condition: service_healthy
+      nats-init:                 # the JetStream streams exist
+        condition: service_completed_successfully
     deploy:
       resources:
         limits:
@@ -113,8 +155,8 @@ services:
     environment:
       NATS_URL: nats://nats:4222
     depends_on:
-      nats:
-        condition: service_healthy
+      nats-init:                 # the JetStream streams exist
+        condition: service_completed_successfully
     deploy:
       resources:
         limits:
@@ -131,8 +173,8 @@ services:
     tmpfs:
       - /tmp                     # ROS_HOME=/tmp/ros (ROS logs)
     depends_on:
-      nats:
-        condition: service_healthy
+      nats-init:                 # the JetStream streams exist
+        condition: service_completed_successfully
     deploy:
       resources:
         limits:
@@ -154,8 +196,8 @@ services:
     tmpfs:
       - /tmp                     # JVM perf data and temporary files
     depends_on:
-      nats:
-        condition: service_healthy
+      nats-init:                 # the JetStream streams exist
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
     deploy:
@@ -197,6 +239,11 @@ services:
         limits:
           cpus: "0.5"
           memory: 256M
+
+configs:
+  # nats-server settings: max_payload 8 MiB, JetStream in /data, monitoring 8222
+  nats-conf:
+    file: ./deploy/nats/nats.conf
 
 volumes:
   postgres-data:
