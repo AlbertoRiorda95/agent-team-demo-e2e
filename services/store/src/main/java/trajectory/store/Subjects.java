@@ -14,6 +14,10 @@ public final class Subjects {
   public static final String PIPELINE_ERRORS = "pipeline.errors";
   /** Output: {@code trajectory.v1.ServiceStatus}, every 5 s (core NATS). */
   public static final String STATUS = "status." + SERVICE;
+  /** Input: {@code trajectory.v1.ConfigSet}, core subscription per instance. */
+  public static final String CONFIG_SET = "config." + SERVICE + ".set";
+  /** Output: {@code trajectory.v1.ConfigApplied} (the {@code CONFIG} stream keeps the latest). */
+  public static final String CONFIG_APPLIED = "config." + SERVICE + ".applied";
   /** The stream of {@code trajectories.>}. */
   public static final String TRAJECTORIES_STREAM = "TRAJECTORIES";
   /** The durable pull consumer, shared by the replicas. */

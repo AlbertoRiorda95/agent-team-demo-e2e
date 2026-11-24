@@ -31,7 +31,17 @@ public final class Migrations {
    *     migration fails
    */
   public static MigrateResult migrate(StoreConfig config, TablePrefix prefix) {
-    return flyway(config, prefix).migrate();
+    return flyway(config, prefix, config.environmentCredentials()).migrate();
+  }
+
+  /**
+   * Applies the pending migrations of the tables of {@code prefix} as {@code credentials}.
+   *
+   * @see #migrate(StoreConfig, TablePrefix)
+   */
+  public static MigrateResult migrate(
+      StoreConfig config, TablePrefix prefix, DbCredentials credentials) {
+    return flyway(config, prefix, credentials).migrate();
   }
 
   static Flyway flyway(StoreConfig config) {
@@ -39,8 +49,12 @@ public final class Migrations {
   }
 
   static Flyway flyway(StoreConfig config, TablePrefix prefix) {
+    return flyway(config, prefix, config.environmentCredentials());
+  }
+
+  static Flyway flyway(StoreConfig config, TablePrefix prefix, DbCredentials credentials) {
     return Flyway.configure()
-        .dataSource(config.jdbcUrl(), config.databaseUser(), config.databasePassword())
+        .dataSource(config.jdbcUrl(), credentials.user(), credentials.password())
         .locations("classpath:db/migration")
         .table(prefix.flywayHistory())
         .placeholders(Map.of("prefix", prefix.value()))

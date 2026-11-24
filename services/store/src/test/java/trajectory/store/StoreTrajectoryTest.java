@@ -15,10 +15,16 @@ import trajectory.v1.Trajectory.TrajectoryComputed;
 class StoreTrajectoryTest {
   private static final Instant NOW = Instant.parse("2026-11-24T10:00:00Z");
 
+  private static final DbCredentials CREDENTIALS = new DbCredentials("u", "p");
+
   private final List<TablePrefix> prefixes = new ArrayList<>();
 
+  private static ConfigInForce defaults() {
+    return ConfigInForce.defaults(CREDENTIALS);
+  }
+
   private TrajectoryRepository answering(Object answer) {
-    return (TrajectoryComputed t, TablePrefix prefix) -> {
+    return (TrajectoryComputed t, TablePrefix prefix, DbCredentials credentials) -> {
       prefixes.add(prefix);
       if (answer instanceof TrajectoryRepository.UnavailableException e) {
         throw e;
@@ -35,12 +41,12 @@ class StoreTrajectoryTest {
     var t = Trajectories.valid(4);
     var stored =
         new StoreTrajectory(
-                answering(new TrajectoryRepository.Saved(false, 4, NOW)), () -> TablePrefix.NONE)
+                answering(new TrajectoryRepository.Saved(false, 4, NOW)), StoreTrajectoryTest::defaults)
             .handle(t.toByteArray());
     assertEquals(new StoreTrajectory.Stored(t.getLaunchId(), 4, NOW, false), stored);
     var dup =
         new StoreTrajectory(
-                answering(new TrajectoryRepository.Saved(true, 4, NOW)), () -> TablePrefix.NONE)
+                answering(new TrajectoryRepository.Saved(true, 4, NOW)), StoreTrajectoryTest::defaults)
             .handle(t.toByteArray());
     assertEquals(new StoreTrajectory.Stored(t.getLaunchId(), 4, NOW, true), dup);
   }
@@ -49,7 +55,7 @@ class StoreTrajectoryTest {
   void undecodableAndInvalidAreRejectedWithoutWriting() {
     var useCase =
         new StoreTrajectory(
-            answering(new TrajectoryRepository.Saved(false, 1, NOW)), () -> TablePrefix.NONE);
+            answering(new TrajectoryRepository.Saved(false, 1, NOW)), StoreTrajectoryTest::defaults);
     var notProto = useCase.handle(new byte[] {(byte) 0xff, 0x01});
     assertEquals(new StoreTrajectory.Rejected("", "not a trajectory.v1.TrajectoryComputed"), notProto);
     var empty = useCase.handle(Trajectories.valid(3).toBuilder().clearSamples().build().toByteArray());
@@ -63,21 +69,21 @@ class StoreTrajectoryTest {
     var down = new TrajectoryRepository.UnavailableException("database unavailable: x", null);
     assertEquals(
         new StoreTrajectory.Retry(t.getLaunchId(), "database unavailable: x"),
-        new StoreTrajectory(answering(down), () -> TablePrefix.NONE).handle(t.toByteArray()));
+        new StoreTrajectory(answering(down), StoreTrajectoryTest::defaults).handle(t.toByteArray()));
     var refused = new TrajectoryRepository.RejectedException("database refused: y", null);
     assertEquals(
         new StoreTrajectory.Rejected(t.getLaunchId(), "database refused: y"),
-        new StoreTrajectory(answering(refused), () -> TablePrefix.NONE).handle(t.toByteArray()));
+        new StoreTrajectory(answering(refused), StoreTrajectoryTest::defaults).handle(t.toByteArray()));
   }
 
   @Test
   void usesThePrefixInForceAtTheStartOfEachMessage() {
-    TablePrefix[] inForce = {TablePrefix.NONE};
+    ConfigInForce[] inForce = {defaults()};
     var useCase =
         new StoreTrajectory(
             answering(new TrajectoryRepository.Saved(false, 1, NOW)), () -> inForce[0]);
     useCase.handle(Trajectories.valid(1).toByteArray());
-    inForce[0] = new TablePrefix("demo_");
+    inForce[0] = new ConfigInForce(1, new TablePrefix("demo_"), new byte[0], CREDENTIALS);
     useCase.handle(Trajectories.valid(1).toByteArray());
     assertEquals(List.of(TablePrefix.NONE, new TablePrefix("demo_")), prefixes);
   }
