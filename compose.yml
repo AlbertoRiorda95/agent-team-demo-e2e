@@ -5,7 +5,8 @@
 # Settings come from .env (copy .env.example): no secret is written here.
 #
 # Ports are bound to 127.0.0.1: reachable from this machine only.
-# Rollback: `docker compose down` (add `-v` to also drop the database volume).
+# Rollback: `docker compose down` (add `-v` to also drop the database and the
+# propagator config volumes).
 name: agent-team-demo-e2e
 
 x-hardening: &hardening
@@ -154,6 +155,13 @@ services:
     read_only: true
     environment:
       NATS_URL: nats://nats:4222
+      # the config in force (docs/design/propagation.md > Data and API),
+      # kept across restarts in the propagator-config volume
+      PROPAGATOR_CONFIG_PATH: /var/lib/propagator/config.json
+    volumes:
+      # writable on the read-only root filesystem; the image creates the
+      # folder owned by uid 10001, so a new volume starts writable for it
+      - propagator-config:/var/lib/propagator
     depends_on:
       nats-init:                 # the JetStream streams exist
         condition: service_completed_successfully
@@ -247,3 +255,4 @@ configs:
 
 volumes:
   postgres-data:
+  propagator-config:            # propagator's local config file

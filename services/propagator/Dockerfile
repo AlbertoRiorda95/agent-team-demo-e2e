@@ -4,8 +4,9 @@
 #   docker build -f services/propagator/Dockerfile -t propagator .
 # The tests and clang-tidy run in the CI `propagator` job, not in the image build.
 # Base: Ubuntu 24.04 (the Debian slim image fails the CI vulnerability gate on
-# unfixed findings). Runtime: non-root (uid 10001), writes nothing (read-only
-# root filesystem ok).
+# unfixed findings). Runtime: non-root (uid 10001), read-only root filesystem
+# ok: it writes only its config file under /var/lib/propagator
+# (PROPAGATOR_CONFIG_PATH), a volume in compose.
 
 ARG UBUNTU_IMAGE=ubuntu:24.04@sha256:9c7f200c07e3d4a03e7249d2c16bf66a51120fb876aa2242cf31451412543289
 
@@ -32,6 +33,9 @@ RUN cmake --preset release -DBUILD_TESTING=OFF -DPROPAGATOR_CLANG_TIDY=OFF \
 
 FROM ${UBUNTU_IMAGE}
 COPY --from=build /out/bin/propagator /usr/local/bin/propagator
+# the config folder, owned by the runtime user: a named volume mounted here
+# copies this ownership when it is created
+RUN install -d -o 10001 -g 10001 -m 0750 /var/lib/propagator
 USER 10001:10001
 # No health endpoint yet (docs/alignment/2026-11-22-5.md): liveness of PID 1
 # (the propagator itself) only, until backend adds a probe.
