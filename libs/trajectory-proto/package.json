@@ -1,6 +1,6 @@
 {
   "name": "@albertoriorda95/trajectory-proto",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "TypeScript types of the Protobuf messages of agent-team-demo-e2e, generated from proto/ with protobuf-es.",
   "license": "UNLICENSED",
   "type": "module",

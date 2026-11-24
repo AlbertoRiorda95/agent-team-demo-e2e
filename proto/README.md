@@ -11,7 +11,7 @@ and version: `proto/<package>/v<N>/*.proto`.
 
 | Package | Status | Files |
 |---|---|---|
-| `trajectory.v1` | the pipeline messages (M1 contracts) | `launch.proto` (`Position`, `LaunchRequest`, `PropagationConfig`, `LaunchAccepted`), `trajectory.proto` (`Sample`, `TrajectoryComputed`, `TrajectoryStored`), `service.proto` (`PipelineError`, `ServiceStatus`), `config.proto` (`PropagatorConfig`, `ConfigSet`, `ConfigApplied`) |
+| `trajectory.v1` | the pipeline messages (M1 contracts) | `launch.proto` (`Position`, `LaunchRequest`, `PropagationConfig`, `LaunchAccepted`), `trajectory.proto` (`Sample`, `TrajectoryComputed`, `TrajectoryStored`), `service.proto` (`PipelineError`, `ServiceStatus`), `config.proto` (`PropagatorConfig`, `StoreConfig`, `ConfigSet`, `ConfigApplied`) |
 | `demo.v1` | deprecated placeholder (foundations), removed by a later contract task once nothing uses it | `ping.proto` (`Ping`) |
 
 Conventions of `trajectory.v1`: SI units, frame ENU (x east, y north, z up,
@@ -53,6 +53,32 @@ Service names on the subjects: `api`, `propagator`, `ros2-publisher`,
 The TypeScript constants of these subjects are in
 `libs/trajectory-proto/src/subjects.ts` (tested against this table); the other
 languages keep their own constants, taken from this table.
+
+## Config payloads
+A `ConfigSet` on `config.<service>.set` carries the payload of its service in
+the `payload` oneof; the `ConfigApplied` answer on `config.<service>.applied`
+carries the config now in force in the same member.
+
+| Service | Member (`ConfigSet` / `ConfigApplied`) | Message |
+|---|---|---|
+| `propagator` | `propagator` (3 / 7) | `PropagatorConfig` |
+| `store` | `store` (4 / 8) | `StoreConfig` |
+
+### Store config
+- `table_prefix`: empty (tables `launches`, `trajectory_samples`), or
+  `^[a-z][a-z0-9_]{0,15}$`, used as is (`demo_` gives `demo_launches`,
+  `demo_trajectory_samples` and the Flyway history `demo_flyway_schema_history`).
+  A value that does not match is refused (`ok = false`).
+- `db_credentials_sealed`: the database write credentials, sealed, never in
+  clear on a message:
+  - algorithm AES-256-GCM, key `STORE_CONFIG_KEY` (base64 of 32 random bytes,
+    `openssl rand -base64 32`), held only by store and the control-web server;
+  - bytes: 12-byte random nonce `||` ciphertext `||` 16-byte tag;
+  - additional authenticated data: the UTF-8 bytes of `trajectory.v1.StoreConfig`;
+  - plaintext: UTF-8 JSON `{"user": "...", "password": "..."}`.
+- Write-only: empty in a `ConfigSet` means "keep the credentials in force" (a
+  prefix-only change); in a `ConfigApplied` it is always empty, whatever was
+  set. The credentials and the key never appear in a log.
 
 ## Streams
 Defined as JSON (the JetStream stream config, as `nats stream add --config`
