@@ -15,6 +15,8 @@
 #include <string_view>
 #include <utility>
 
+#include "propagator/config.hpp"
+
 namespace propagator {
 
 /// Version of the propagator library.
@@ -30,12 +32,15 @@ enum class Health : std::uint8_t { ok, degraded };
 struct Config {
   /// NATS server URL (`NATS_URL`).
   std::string nats_url;
+  /// The local file of the config in force (`PROPAGATOR_CONFIG_PATH`).
+  std::string config_path{default_config_path};
 };
 
 /// URL used when `NATS_URL` is not set (the local dev stack, `.env.example`).
 inline constexpr std::string_view default_nats_url = "nats://localhost:4222";
 
-/// Reads the configuration from the environment (`NATS_URL`).
+/// Reads the configuration from the environment (`NATS_URL`,
+/// `PROPAGATOR_CONFIG_PATH`); an unset or empty variable gives the default.
 [[nodiscard]] Config config_from_env();
 
 /// `url` without its credentials (`nats://user:pass@host` -> `nats://***@host`),
@@ -93,8 +98,11 @@ inline constexpr std::chrono::seconds heartbeat_interval{5};
 /// Kubernetes), or "propagator" when it is unknown.
 [[nodiscard]] std::string instance_name();
 
-/// Entry point: connects to NATS (retrying with `backoff` and logging a JSON
-/// error on each failure), then until `stop` becomes true pulls the
+/// Entry point: reads the config in force from `config.config_path` (the
+/// defaults, version 0, when there is none or it is corrupt), connects to NATS
+/// (retrying with `backoff` and logging a JSON error on each failure),
+/// publishes a `ConfigApplied` of the config in force, then until `stop`
+/// becomes true applies the `ConfigSet`s of `config.propagator.set`, pulls the
 /// `LaunchAccepted` messages of the durable consumer, publishes their
 /// `TrajectoryComputed` (or a `PipelineError` for an invalid one) and sends a
 /// heartbeat every `heartbeat_interval`. Never exits because NATS is down.

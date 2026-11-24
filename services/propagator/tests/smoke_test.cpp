@@ -32,6 +32,15 @@ TEST(Propagator, ReadsNatsUrlFromTheEnvironment) {
   EXPECT_EQ(propagator::config_from_env().nats_url, propagator::default_nats_url);
 }
 
+TEST(Propagator, ReadsTheConfigPathFromTheEnvironment) {
+  ASSERT_EQ(setenv("PROPAGATOR_CONFIG_PATH", "/tmp/propagator/config.json", 1), 0);
+  EXPECT_EQ(propagator::config_from_env().config_path, "/tmp/propagator/config.json");
+  ASSERT_EQ(setenv("PROPAGATOR_CONFIG_PATH", "", 1), 0);
+  EXPECT_EQ(propagator::config_from_env().config_path, propagator::default_config_path);
+  ASSERT_EQ(unsetenv("PROPAGATOR_CONFIG_PATH"), 0);
+  EXPECT_EQ(propagator::config_from_env().config_path, "/var/lib/propagator/config.json");
+}
+
 TEST(Propagator, RedactsCredentialsFromUrls) {
   EXPECT_EQ(propagator::redact_url("nats://user:secret@nats:4222"), "nats://***@nats:4222");
   EXPECT_EQ(propagator::redact_url("nats://token@nats:4222/x@y"), "nats://***@nats:4222/x@y");

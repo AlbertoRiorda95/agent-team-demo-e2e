@@ -200,7 +200,8 @@ void NatsPipeline::handle(natsMsg* message) {
             {"duration_ms", elapsed_ms()}});
 }
 
-void NatsPipeline::heartbeat(Health connection, std::uint64_t config_version) {
+void NatsPipeline::heartbeat(Health connection, std::uint64_t config_version,
+                             std::string_view config_problem) {
   std::string reason;
   if (connection != Health::ok) {
     reason = "NATS disconnected";
@@ -208,6 +209,8 @@ void NatsPipeline::heartbeat(Health connection, std::uint64_t config_version) {
     reason = consumer_problem_;
   } else if (!publish_problem_.empty()) {
     reason = publish_problem_;
+  } else if (!config_problem.empty()) {
+    reason = std::string{config_problem};
   }
   const std::string bytes =
       make_status(instance_, reason, config_version, std::chrono::system_clock::now())

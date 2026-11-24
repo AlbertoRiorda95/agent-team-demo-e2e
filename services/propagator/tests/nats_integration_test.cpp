@@ -13,6 +13,8 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <optional>
 #include <random>
@@ -21,15 +23,20 @@
 #include <thread>
 #include <vector>
 
+#include "propagator/config.hpp"
 #include "propagator/propagator.hpp"
+#include "trajectory/v1/config.pb.h"
 #include "trajectory/v1/launch.pb.h"
 #include "trajectory/v1/service.pb.h"
 #include "trajectory/v1/trajectory.pb.h"
 
 namespace {
 
+namespace fs = std::filesystem;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
+using trajectory::v1::ConfigApplied;
+using trajectory::v1::ConfigSet;
 using trajectory::v1::LaunchAccepted;
 using trajectory::v1::PipelineError;
 using trajectory::v1::ServiceStatus;
@@ -41,14 +48,36 @@ std::string test_url() {
   return url == nullptr ? std::string{} : std::string{url};
 }
 
-std::string random_launch_id() {
+std::string random_id() {
   std::random_device device;
   std::mt19937_64 random(device());
   std::uniform_int_distribution<std::uint64_t> any;
   std::ostringstream id;
   id << std::hex << any(random) << any(random);
-  return "it-" + id.str();
+  return id.str();
 }
+
+std::string random_launch_id() { return "it-" + random_id(); }
+
+// A fresh folder for the config file of one test, removed at the end.
+class TempFolder {
+ public:
+  TempFolder() : path_(fs::temp_directory_path() / ("propagator-it-" + random_id())) {
+    fs::create_directories(path_);
+  }
+  ~TempFolder() {
+    std::error_code ignored;
+    fs::remove_all(path_, ignored);
+  }
+  TempFolder(const TempFolder&) = delete;
+  TempFolder& operator=(const TempFolder&) = delete;
+  TempFolder(TempFolder&&) = delete;
+  TempFolder& operator=(TempFolder&&) = delete;
+  [[nodiscard]] fs::path file() const { return path_ / "config.json"; }
+
+ private:
+  fs::path path_;
+};
 
 struct ConnectionDeleter {
   void operator()(natsConnection* c) const { natsConnection_Destroy(c); }
@@ -73,8 +102,10 @@ std::string payload_of(natsMsg* message) {
 // The service under test, running in its own thread until destroyed.
 class RunningService {
  public:
-  explicit RunningService(const std::string& url)
-      : thread_([this, url] { code_ = propagator::run(propagator::Config{url}, stop_, log_); }) {}
+  RunningService(const std::string& url, const fs::path& config_path)
+      : thread_([this, url, config_path] {
+          code_ = propagator::run(propagator::Config{url, config_path.string()}, stop_, log_);
+        }) {}
   ~RunningService() { stop(); }
   RunningService(const RunningService&) = delete;
   RunningService& operator=(const RunningService&) = delete;
@@ -194,6 +225,54 @@ class PropagatorOnNats : public ::testing::Test {
     return l;
   }
 
+  // Publishes `set` on config.propagator.set as control-web does.
+  void publish_config(const ConfigSet& set) {
+    const std::string bytes = set.SerializeAsString();
+    ASSERT_EQ(natsConnection_Publish(connection_.get(), "config.propagator.set", bytes.data(),
+                                     static_cast<int>(bytes.size())),
+              NATS_OK);
+    ASSERT_EQ(natsConnection_Flush(connection_.get()), NATS_OK);
+  }
+
+  static ConfigSet config_set(std::uint64_t version, double propagation_time_s,
+                              double sample_step_s) {
+    ConfigSet set;
+    set.set_service("propagator");
+    set.set_config_version(version);
+    set.mutable_propagator()->set_propagation_time_s(propagation_time_s);
+    set.mutable_propagator()->set_sample_step_s(sample_step_s);
+    return set;
+  }
+
+  // The next ConfigApplied of this host on `subscription` within `timeout`,
+  // or nothing.
+  std::optional<ConfigApplied> next_applied(natsSubscription* subscription, milliseconds timeout) {
+    const std::string instance = propagator::instance_name();
+    ConfigApplied applied;
+    const Message message = next_matching(subscription, timeout, [&](natsMsg* m) {
+      return applied.ParseFromString(payload_of(m)) && applied.instance() == instance;
+    });
+    if (message == nullptr) {
+      return std::nullopt;
+    }
+    return applied;
+  }
+
+  // The next heartbeat of this host on `subscription` within `timeout`.
+  std::optional<ServiceStatus> next_heartbeat(natsSubscription* subscription,
+                                              milliseconds timeout) {
+    const std::string instance = propagator::instance_name();
+    ServiceStatus heartbeat;
+    const Message message = next_matching(subscription, timeout, [&](natsMsg* m) {
+      return heartbeat.ParseFromString(payload_of(m)) && heartbeat.instance() == instance;
+    });
+    if (message == nullptr) {
+      return std::nullopt;
+    }
+    return heartbeat;
+  }
+
+  TempFolder folder_;
   std::string url_;
   std::unique_ptr<natsConnection, ConnectionDeleter> connection_;
   std::unique_ptr<jsCtx, ContextDeleter> js_;
@@ -202,7 +281,7 @@ class PropagatorOnNats : public ::testing::Test {
 TEST_F(PropagatorOnNats, ALaunchBecomesOneTrajectoryAndIsAcked) {
   const std::string id = random_launch_id();
   const Subscription trajectories = subscribe("trajectories.computed");
-  RunningService service(url_);
+  RunningService service(url_, folder_.file());
 
   const LaunchAccepted input = launch(id);
   const std::uint64_t sequence = publish_launch(input);
@@ -241,7 +320,7 @@ TEST_F(PropagatorOnNats, AnInvalidLaunchIsAPipelineErrorAndIsNotRedelivered) {
   const std::string id = random_launch_id();
   const Subscription trajectories = subscribe("trajectories.computed");
   const Subscription errors = subscribe("pipeline.errors");
-  RunningService service(url_);
+  RunningService service(url_, folder_.file());
 
   LaunchAccepted input = launch(id);
   input.mutable_request()->set_mass_kg(0.0);
@@ -277,7 +356,7 @@ TEST_F(PropagatorOnNats, AnInvalidLaunchIsAPipelineErrorAndIsNotRedelivered) {
 
 TEST_F(PropagatorOnNats, AnUndecodableMessageIsAPipelineError) {
   const Subscription errors = subscribe("pipeline.errors");
-  RunningService service(url_);
+  RunningService service(url_, folder_.file());
 
   const std::string garbage = "\xff\xff\xff not a LaunchAccepted";
   jsPubAck* ack = nullptr;
@@ -299,7 +378,7 @@ TEST_F(PropagatorOnNats, AnUndecodableMessageIsAPipelineError) {
 
 TEST_F(PropagatorOnNats, SendsAHeartbeatEveryFiveSeconds) {
   const Subscription status = subscribe("status.propagator");
-  RunningService service(url_);
+  RunningService service(url_, folder_.file());
   const std::string instance = propagator::instance_name();
 
   std::vector<steady_clock::time_point> received;
@@ -321,6 +400,137 @@ TEST_F(PropagatorOnNats, SendsAHeartbeatEveryFiveSeconds) {
     EXPECT_GE(gap.count(), 4'000);  // 5 s +- 1 s
     EXPECT_LE(gap.count(), 6'000);
   }
+}
+
+TEST_F(PropagatorOnNats, StartsWithTheDefaultsAndPublishesThemAsApplied) {
+  const Subscription applied = subscribe("config.propagator.applied");
+  RunningService service(url_, folder_.file());
+
+  const auto startup = next_applied(applied.get(), milliseconds{10'000});
+  ASSERT_TRUE(startup.has_value()) << service.stop();
+  EXPECT_EQ(startup->service(), "propagator");
+  EXPECT_TRUE(startup->ok());
+  EXPECT_EQ(startup->error(), "");
+  EXPECT_EQ(startup->config_version(), 0U);
+  EXPECT_EQ(startup->propagator().propagation_time_s(), 60.0);
+  EXPECT_EQ(startup->propagator().sample_step_s(), 0.01);
+  EXPECT_GT(startup->applied_at().seconds(), 0);
+  EXPECT_FALSE(fs::exists(folder_.file())) << "the defaults are not written";
+}
+
+TEST_F(PropagatorOnNats, AValidConfigIsAppliedSavedAndInForceAfterARestart) {
+  const Subscription applied = subscribe("config.propagator.applied");
+  const Subscription status = subscribe("status.propagator");
+  {
+    RunningService service(url_, folder_.file());
+    ASSERT_TRUE(next_applied(applied.get(), milliseconds{10'000}).has_value()) << service.stop();
+
+    publish_config(config_set(7, 120.0, 0.02));
+    const auto answer = next_applied(applied.get(), milliseconds{5'000});
+    ASSERT_TRUE(answer.has_value()) << service.stop();
+    EXPECT_TRUE(answer->ok()) << answer->error();
+    EXPECT_EQ(answer->config_version(), 7U);
+    EXPECT_EQ(answer->propagator().propagation_time_s(), 120.0);
+    EXPECT_EQ(answer->propagator().sample_step_s(), 0.02);
+
+    const auto saved = propagator::load_config_file(folder_.file());
+    EXPECT_EQ(saved.problem, "");
+    EXPECT_EQ(saved.config, (propagator::ConfigInForce{7, 120.0, 0.02}));
+
+    // The same version again: acknowledged, nothing changes.
+    publish_config(config_set(7, 30.0, 0.5));
+    const auto again = next_applied(applied.get(), milliseconds{5'000});
+    ASSERT_TRUE(again.has_value()) << service.stop();
+    EXPECT_TRUE(again->ok());
+    EXPECT_EQ(again->config_version(), 7U);
+    EXPECT_EQ(again->propagator().propagation_time_s(), 120.0);
+
+    const std::string log = service.stop();
+    EXPECT_NE(log.find(R"("msg":"config set","version":"7","ok":"true","outcome":"applied")"),
+              std::string::npos)
+        << log;
+  }
+
+  // Restart: the file is the config in force, announced and on the heartbeat.
+  // Drop the heartbeats of the first run still queued.
+  next_matching(status.get(), milliseconds{300}, [](natsMsg* /*m*/) { return false; });
+  RunningService restarted(url_, folder_.file());
+  const auto startup = next_applied(applied.get(), milliseconds{10'000});
+  ASSERT_TRUE(startup.has_value()) << restarted.stop();
+  EXPECT_TRUE(startup->ok());
+  EXPECT_EQ(startup->config_version(), 7U);
+  EXPECT_EQ(startup->propagator().propagation_time_s(), 120.0);
+  EXPECT_EQ(startup->propagator().sample_step_s(), 0.02);
+
+  const auto heartbeat = next_heartbeat(status.get(), milliseconds{8'000});
+  ASSERT_TRUE(heartbeat.has_value()) << restarted.stop();
+  EXPECT_EQ(heartbeat->config_version(), 7U);
+  EXPECT_EQ(heartbeat->state(), ServiceStatus::STATE_OK) << heartbeat->detail();
+}
+
+TEST_F(PropagatorOnNats, AnInvalidOrStaleConfigIsRefusedAndTheConfigInForceKept) {
+  ASSERT_EQ(propagator::save_config_file(folder_.file(), {4, 90.0, 0.05}), std::nullopt);
+  const Subscription applied = subscribe("config.propagator.applied");
+  RunningService service(url_, folder_.file());
+  const auto startup = next_applied(applied.get(), milliseconds{10'000});
+  ASSERT_TRUE(startup.has_value()) << service.stop();
+  EXPECT_EQ(startup->config_version(), 4U);
+
+  publish_config(config_set(5, 3600.0, 0.001));  // over the sample cap
+  const auto invalid = next_applied(applied.get(), milliseconds{5'000});
+  ASSERT_TRUE(invalid.has_value()) << service.stop();
+  EXPECT_FALSE(invalid->ok());
+  EXPECT_EQ(invalid->error(), "propagation_time_s / sample_step_s must be <= 100000");
+  EXPECT_EQ(invalid->config_version(), 4U);
+  EXPECT_EQ(invalid->propagator().propagation_time_s(), 90.0);
+  EXPECT_EQ(invalid->propagator().sample_step_s(), 0.05);
+
+  publish_config(config_set(3, 60.0, 0.01));
+  const auto stale = next_applied(applied.get(), milliseconds{5'000});
+  ASSERT_TRUE(stale.has_value()) << service.stop();
+  EXPECT_FALSE(stale->ok());
+  EXPECT_EQ(stale->error(), "stale version");
+  EXPECT_EQ(stale->config_version(), 4U);
+
+  EXPECT_EQ(propagator::load_config_file(folder_.file()).config,
+            (propagator::ConfigInForce{4, 90.0, 0.05}));
+}
+
+TEST_F(PropagatorOnNats, ACorruptConfigFileStartsWithTheDefaultsDegradedUntilAValidSet) {
+  {
+    std::ofstream out(folder_.file());
+    out << "{ not json";
+  }
+  const Subscription applied = subscribe("config.propagator.applied");
+  const Subscription status = subscribe("status.propagator");
+  RunningService service(url_, folder_.file());
+
+  const auto startup = next_applied(applied.get(), milliseconds{10'000});
+  ASSERT_TRUE(startup.has_value()) << service.stop();
+  EXPECT_TRUE(startup->ok());
+  EXPECT_EQ(startup->config_version(), 0U);
+  const auto degraded = next_heartbeat(status.get(), milliseconds{8'000});
+  ASSERT_TRUE(degraded.has_value()) << service.stop();
+  EXPECT_EQ(degraded->state(), ServiceStatus::STATE_DEGRADED);
+  EXPECT_NE(degraded->detail().find("is not a JSON object"), std::string::npos)
+      << degraded->detail();
+
+  publish_config(config_set(1, 60.0, 0.1));
+  const auto answer = next_applied(applied.get(), milliseconds{5'000});
+  ASSERT_TRUE(answer.has_value()) << service.stop();
+  EXPECT_TRUE(answer->ok());
+  // The heartbeats sent before the set still say degraded; the next one is ok.
+  std::optional<ServiceStatus> ok;
+  const auto deadline = steady_clock::now() + milliseconds{12'000};
+  while (steady_clock::now() < deadline) {
+    ok = next_heartbeat(status.get(), milliseconds{6'000});
+    if (ok.has_value() && ok->config_version() == 1U) {
+      break;
+    }
+  }
+  ASSERT_TRUE(ok.has_value()) << service.stop();
+  EXPECT_EQ(ok->config_version(), 1U);
+  EXPECT_EQ(ok->state(), ServiceStatus::STATE_OK) << ok->detail();
 }
 
 }  // namespace

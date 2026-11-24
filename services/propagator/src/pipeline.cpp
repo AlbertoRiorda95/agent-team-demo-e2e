@@ -1,7 +1,5 @@
 #include "propagator/pipeline.hpp"
 
-#include <google/protobuf/timestamp.pb.h>
-
 #include <algorithm>
 #include <cmath>
 #include <initializer_list>
@@ -10,6 +8,7 @@
 
 #include "propagator/propagate.hpp"
 #include "propagator/propagator.hpp"
+#include "stamp.hpp"
 
 namespace propagator {
 
@@ -17,14 +16,6 @@ namespace {
 
 using trajectory::v1::LaunchAccepted;
 using trajectory::v1::ServiceStatus;
-
-void stamp(google::protobuf::Timestamp* timestamp, std::chrono::system_clock::time_point now) {
-  const auto since_epoch = now.time_since_epoch();
-  const auto seconds = std::chrono::floor<std::chrono::seconds>(since_epoch);
-  const auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(since_epoch - seconds);
-  timestamp->set_seconds(seconds.count());
-  timestamp->set_nanos(static_cast<std::int32_t>(nanos.count()));
-}
 
 bool all_finite(std::initializer_list<double> values) {
   return std::ranges::all_of(values, [](double value) { return std::isfinite(value); });

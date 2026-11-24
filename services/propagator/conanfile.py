@@ -23,6 +23,8 @@ class PropagatorConan(ConanFile):
         # The runtime of the committed generated code (src/gen/): the C++
         # gencode checks that the runtime is exactly its version (buf.gen.yaml).
         self.requires("protobuf/6.33.5")
+        # The local config file (PROPAGATOR_CONFIG_PATH): header-only, MIT.
+        self.requires("nlohmann_json/3.12.0")
 
     def build_requirements(self):
         self.test_requires("gtest/1.18.0")

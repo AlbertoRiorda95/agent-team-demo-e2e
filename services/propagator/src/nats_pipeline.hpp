@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <ostream>
 #include <string>
+#include <string_view>
 
 #include "propagator/propagator.hpp"
 
@@ -29,8 +30,10 @@ class NatsPipeline {
   /// missing (retried on the next call when that fails).
   void poll(std::chrono::milliseconds wait);
 
-  /// Publishes one `ServiceStatus` on `status.propagator` (core NATS).
-  void heartbeat(Health connection, std::uint64_t config_version);
+  /// Publishes one `ServiceStatus` on `status.propagator` (core NATS):
+  /// `degraded` when NATS is down, the consumer is missing, the last publish
+  /// failed or `config_problem` is not empty.
+  void heartbeat(Health connection, std::uint64_t config_version, std::string_view config_problem);
 
  private:
   bool ensure_subscription();
