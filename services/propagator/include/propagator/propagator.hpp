@@ -1,8 +1,9 @@
-// Public interface of the propagator library (foundations skeleton).
-//
-// No physics yet: the entry point connects to NATS and waits until it is told
-// to stop. The trajectory propagation comes with the M1 contracts.
+// Public interface of the propagator service: configuration, logs, the NATS
+// connection and the entry point that runs the pipeline
+// (docs/design/propagation.md > User flows).
 #pragma once
+
+#include <nats/nats.h>
 
 #include <atomic>
 #include <chrono>
@@ -77,13 +78,26 @@ class NatsConnection {
   /// Current health, updated by the client's disconnect/reconnect callbacks.
   [[nodiscard]] Health health() const noexcept;
 
+  /// The cnats connection, null until `connect` succeeds; owned by this object.
+  [[nodiscard]] natsConnection* native() const noexcept;
+
  private:
   struct Impl;
   std::unique_ptr<Impl> impl_;
 };
 
-/// Stub entry point: connects to NATS (retrying with `backoff` and logging a
-/// JSON error on each failure) and then waits until `stop` becomes true.
+/// Interval of the heartbeat on `status.propagator`.
+inline constexpr std::chrono::seconds heartbeat_interval{5};
+
+/// The instance name on the heartbeat: the host name (the pod name on
+/// Kubernetes), or "propagator" when it is unknown.
+[[nodiscard]] std::string instance_name();
+
+/// Entry point: connects to NATS (retrying with `backoff` and logging a JSON
+/// error on each failure), then until `stop` becomes true pulls the
+/// `LaunchAccepted` messages of the durable consumer, publishes their
+/// `TrajectoryComputed` (or a `PipelineError` for an invalid one) and sends a
+/// heartbeat every `heartbeat_interval`. Never exits because NATS is down.
 /// Returns the process exit code.
 int run(const Config& config, const std::atomic<bool>& stop, std::ostream& log,
         const BackoffPolicy& backoff = {});

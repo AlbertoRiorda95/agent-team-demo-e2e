@@ -2,9 +2,14 @@
 
 #include <nats/nats.h>
 
+#include <unistd.h>
+
 #include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <thread>
+
+#include "nats_pipeline.hpp"
 
 namespace propagator {
 
@@ -170,6 +175,16 @@ bool NatsConnection::connect(const std::string& url, std::string* error) {
 
 Health NatsConnection::health() const noexcept { return impl_->health.load(); }
 
+natsConnection* NatsConnection::native() const noexcept { return impl_->connection; }
+
+std::string instance_name() {
+  std::array<char, 256> name{};
+  if (gethostname(name.data(), name.size() - 1) == 0 && name.front() != '\0') {
+    return std::string{name.data()};
+  }
+  return std::string{service_name};
+}
+
 int run(const Config& config, const std::atomic<bool>& stop, std::ostream& log,
         const BackoffPolicy& backoff) {
   log_json(log, "info", "starting",
@@ -191,8 +206,25 @@ int run(const Config& config, const std::atomic<bool>& stop, std::ostream& log,
     sleep_unless_stopped(delay, stop);
   }
 
-  while (!stop.load()) {
-    std::this_thread::sleep_for(stop_poll);
+  if (!stop.load()) {
+    // The config in force comes with the config task (#89): the defaults, v0.
+    constexpr std::uint64_t config_version = 0;
+    constexpr std::chrono::milliseconds max_fetch_wait{1'000};
+    NatsPipeline pipeline(nats.native(), log, instance_name());
+    auto next_heartbeat = std::chrono::steady_clock::now();
+    while (!stop.load()) {
+      const auto now = std::chrono::steady_clock::now();
+      if (now >= next_heartbeat) {
+        pipeline.heartbeat(nats.health(), config_version);
+        next_heartbeat += heartbeat_interval;
+        if (next_heartbeat <= now) {
+          next_heartbeat = now + heartbeat_interval;  // fell behind: no burst
+        }
+      }
+      const auto until_heartbeat = std::chrono::duration_cast<std::chrono::milliseconds>(
+          next_heartbeat - std::chrono::steady_clock::now());
+      pipeline.poll(std::clamp(until_heartbeat, stop_poll, max_fetch_wait));
+    }
   }
   log_json(log, "info", "stopping");
   return EXIT_SUCCESS;
