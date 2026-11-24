@@ -2,7 +2,9 @@ package trajectory.store;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The store's configuration, read from the environment and validated before anything starts.
@@ -11,18 +13,47 @@ import java.util.Map;
  * @param databaseUser {@code DATABASE_USER}
  * @param databasePassword {@code DATABASE_PASSWORD} (never logged)
  * @param natsUrl {@code NATS_URL}, {@code nats://localhost:4222} when unset
+ * @param configPath {@code STORE_CONFIG_PATH}, {@link LocalConfigFile#DEFAULT_PATH} when unset
+ * @param sealing the key of {@code STORE_CONFIG_KEY}; empty when it is missing or not the base64
+ *     of 32 bytes (the store then runs degraded, see {@link #configKeyProblem})
+ * @param configKeyProblem why {@code sealing} is empty, empty otherwise (never the value)
  */
 public record StoreConfig(
-    String jdbcUrl, String databaseUser, String databasePassword, String natsUrl) {
+    String jdbcUrl,
+    String databaseUser,
+    String databasePassword,
+    String natsUrl,
+    Path configPath,
+    Optional<CredentialSealing> sealing,
+    String configKeyProblem) {
 
   /** The NATS URL when {@code NATS_URL} is not set (the local compose stack). */
   public static final String DEFAULT_NATS_URL = "nats://localhost:4222";
 
-  /** Hides the password from {@link #toString()}. */
+  /** Without the config file nor the key: the defaults, as in the tests of the pipeline. */
+  public StoreConfig(
+      String jdbcUrl, String databaseUser, String databasePassword, String natsUrl) {
+    this(jdbcUrl, databaseUser, databasePassword, natsUrl, LocalConfigFile.DEFAULT_PATH,
+        Optional.empty(), "STORE_CONFIG_KEY is not set");
+  }
+
+  /** The same configuration with another config file and key (the tests). */
+  public StoreConfig withConfig(Path path, Optional<CredentialSealing> key) {
+    return new StoreConfig(jdbcUrl, databaseUser, databasePassword, natsUrl, path, key,
+        key.isPresent() ? "" : "STORE_CONFIG_KEY is not set");
+  }
+
+  /** The credentials of the environment. */
+  public DbCredentials environmentCredentials() {
+    return new DbCredentials(databaseUser, databasePassword);
+  }
+
+  /** Hides the password and the key from {@link #toString()}. */
   @Override
   public String toString() {
     return "StoreConfig[jdbcUrl=" + jdbcUrl + ", databaseUser=" + databaseUser
-        + ", natsUrl=" + redact(natsUrl) + "]";
+        + ", natsUrl=" + redact(natsUrl) + ", configPath=" + configPath
+        + ", configKey=" + (sealing.isPresent() ? "set" : "missing") + "]";
   }
 
   /**
@@ -45,7 +76,21 @@ public record StoreConfig(
     if (!"nats".equals(natsUri.getScheme()) || natsUri.getHost() == null) {
       throw new IllegalArgumentException("NATS_URL must be nats://<host>[:<port>]");
     }
-    return new StoreConfig(jdbcUrl, user, password, nats);
+    String pathValue = env.getOrDefault("STORE_CONFIG_PATH", "").strip();
+    Path path = pathValue.isEmpty() ? LocalConfigFile.DEFAULT_PATH : Path.of(pathValue);
+    String key = env.getOrDefault("STORE_CONFIG_KEY", "").strip();
+    Optional<CredentialSealing> sealing = Optional.empty();
+    String keyProblem = "";
+    if (key.isEmpty()) {
+      keyProblem = "STORE_CONFIG_KEY is not set";
+    } else {
+      try {
+        sealing = Optional.of(CredentialSealing.fromBase64(key));
+      } catch (IllegalArgumentException e) {
+        keyProblem = e.getMessage(); // names the variable, never its value
+      }
+    }
+    return new StoreConfig(jdbcUrl, user, password, nats, path, sealing, keyProblem);
   }
 
   /**

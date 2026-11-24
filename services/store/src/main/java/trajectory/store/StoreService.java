@@ -13,8 +13,10 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 /**
- * The store: applies the migrations, connects to NATS, starts the {@code status.store} heartbeat,
- * creates the durable consumer and pulls {@code trajectories.computed}. Each start-up step is
+ * The store: reads its local config file, applies the migrations of the prefix in force, connects
+ * to NATS, starts the {@code status.store} heartbeat, answers {@code config.store.set}, publishes
+ * the {@code ConfigApplied} of the config in force, creates the durable consumer and pulls {@code
+ * trajectories.computed}. Each start-up step is
  * retried with {@link Backoff} until it succeeds; a failure is logged with {@code
  * "health":"degraded"}, never thrown.
  */
@@ -34,8 +36,9 @@ public final class StoreService implements AutoCloseable {
   private final Sleeper sleeper;
   private final ServiceHealth health = new ServiceHealth();
   private final Duration heartbeatInterval;
-  private volatile TablePrefix prefix = TablePrefix.NONE;
   private volatile Connection nats;
+  private ApplyStoreConfig configs;
+  private ConfigListener configListener;
   private Heartbeat heartbeat;
   private TrajectoryConsumer consumer;
   private PostgresTrajectoryRepository repository;
@@ -66,16 +69,28 @@ public final class StoreService implements AutoCloseable {
    * @throws InterruptedException when stopped while retrying
    */
   public void start() throws InterruptedException {
+    configs = new ApplyStoreConfig(loadConfig(), config.sealing(), new ConfigPorts());
+    health.configKey(config.sealing().isPresent());
+    if (config.sealing().isEmpty()) {
+      log.warn(
+          "no config key: sets with credentials are refused",
+          Map.of("error", config.configKeyProblem(), "health", "degraded"));
+    }
     migrate();
     connectNats();
+    String instance = instanceName();
     heartbeat =
         new Heartbeat(
-            nats, health, () -> 0L, instanceName(), version(), log, heartbeatInterval);
+            nats, health, () -> configs.inForce().version(), instance, version(), log,
+            heartbeatInterval);
     heartbeat.start();
+    configListener = new ConfigListener(nats, configs, health, log, instance);
+    configListener.start();
+    configListener.answer(true, "", configs.inForce());
     repository = new PostgresTrajectoryRepository(this::openDatabase);
     consumer =
         new TrajectoryConsumer(
-            nats, new StoreTrajectory(repository, () -> prefix), health, log, sleeper);
+            nats, new StoreTrajectory(repository, configs::inForce), health, log, sleeper);
     retry(
         "cannot create the durable consumer",
         () -> {
@@ -101,10 +116,62 @@ public final class StoreService implements AutoCloseable {
     return health.report();
   }
 
+  /** The config in force, for the tests. */
+  ConfigInForce configInForce() {
+    return configs.inForce();
+  }
+
+  /**
+   * The config of the local file; the defaults (version 0, no prefix, the environment
+   * credentials) when there is none, or when it cannot be used (logged without its content,
+   * degraded until a set is applied).
+   */
+  ConfigInForce loadConfig() {
+    ConfigInForce defaults = ConfigInForce.defaults(config.environmentCredentials());
+    LocalConfigFile file = new LocalConfigFile(config.configPath());
+    String problem;
+    try {
+      var content = file.load();
+      if (content.isEmpty()) {
+        log.info("no local config file: defaults", Map.of("path", file.path().toString()));
+        return defaults;
+      }
+      LocalConfigFile.Content c = content.get();
+      byte[] sealed = c.sealedCredentials();
+      DbCredentials credentials = config.environmentCredentials();
+      if (sealed.length > 0) {
+        if (config.sealing().isEmpty()) {
+          throw new CredentialSealing.SealingException(ApplyStoreConfig.NO_CONFIG_KEY);
+        }
+        credentials = config.sealing().get().open(sealed);
+      }
+      log.info(
+          "local config file read",
+          Map.of(
+              "path", file.path().toString(),
+              "config_version", String.valueOf(c.version()),
+              "table_prefix", c.prefix().value(),
+              "credentials", sealed.length > 0 ? "sealed" : "environment"));
+      return new ConfigInForce(c.version(), c.prefix(), sealed, credentials);
+    } catch (java.io.IOException e) {
+      problem = "unreadable: " + e.getClass().getSimpleName();
+    } catch (LocalConfigFile.InvalidFileException | CredentialSealing.SealingException e) {
+      problem = e.getMessage(); // what is wrong, never the content
+    }
+    health.configFile(false);
+    log.error(
+        "local config file not used: defaults",
+        Map.of("path", file.path().toString(), "error", problem, "health", "degraded"));
+    return defaults;
+  }
+
   void migrate() throws InterruptedException {
-    TablePrefix p = prefix;
+    ConfigInForce inForce = configs.inForce();
+    TablePrefix p = inForce.prefix();
     var result =
-        retry("cannot apply the database migrations", () -> Migrations.migrate(config, p));
+        retry(
+            "cannot apply the database migrations",
+            () -> Migrations.migrate(config, p, inForce.credentials()));
     health.database(true);
     log.info(
         "database migrated",
@@ -114,11 +181,40 @@ public final class StoreService implements AutoCloseable {
             "applied", String.valueOf(result.migrationsExecuted)));
   }
 
-  /** A connection with the credentials of the environment (task 3 adds the sealed ones). */
-  private java.sql.Connection openDatabase() throws java.sql.SQLException {
+  /** The database and the file, as the config use case needs them. */
+  private final class ConfigPorts implements ApplyStoreConfig.Ports {
+    @Override
+    public void migrate(TablePrefix prefix, DbCredentials credentials) {
+      var result = Migrations.migrate(config, prefix, credentials);
+      log.info(
+          "database migrated",
+          Map.of(
+              "table_prefix", prefix.value(),
+              "schema_version", String.valueOf(result.targetSchemaVersion),
+              "applied", String.valueOf(result.migrationsExecuted)));
+    }
+
+    @Override
+    public void testConnection(DbCredentials credentials) throws java.sql.SQLException {
+      try (java.sql.Connection c = openDatabase(credentials)) {
+        if (!c.isValid(Integer.parseInt(DB_CONNECT_TIMEOUT_S))) {
+          throw new java.sql.SQLException("the test connection is not valid");
+        }
+      }
+    }
+
+    @Override
+    public void save(LocalConfigFile.Content content) throws java.io.IOException {
+      new LocalConfigFile(config.configPath()).save(content);
+    }
+  }
+
+  /** A connection as {@code credentials}. */
+  private java.sql.Connection openDatabase(DbCredentials credentials)
+      throws java.sql.SQLException {
     Properties props = new Properties();
-    props.setProperty("user", config.databaseUser());
-    props.setProperty("password", config.databasePassword());
+    props.setProperty("user", credentials.user());
+    props.setProperty("password", credentials.password());
     props.setProperty("connectTimeout", DB_CONNECT_TIMEOUT_S);
     props.setProperty("ApplicationName", "store");
     return DriverManager.getConnection(config.jdbcUrl(), props);
@@ -203,9 +299,15 @@ public final class StoreService implements AutoCloseable {
     return line.replace(config.natsUrl(), StoreConfig.redact(config.natsUrl()));
   }
 
-  /** Stops the consumer (the message in progress finishes), the heartbeat, then NATS. */
+  /**
+   * Stops the config subscription, the consumer (the message in progress finishes), the
+   * heartbeat, then NATS.
+   */
   @Override
   public void close() {
+    if (configListener != null) {
+      configListener.close();
+    }
     if (consumer != null) {
       consumer.close();
     }
