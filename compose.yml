@@ -6,7 +6,7 @@
 #
 # Ports are bound to 127.0.0.1: reachable from this machine only.
 # Rollback: `docker compose down` (add `-v` to also drop the database and the
-# propagator config volumes).
+# propagator and store config volumes).
 name: agent-team-demo-e2e
 
 x-hardening: &hardening
@@ -201,6 +201,17 @@ services:
       DATABASE_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env (see .env.example)}
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env (see .env.example)}
       JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
+      # the config in force (docs/design/persistence.md > Data and API), kept
+      # across restarts in the store-config volume; the credentials in it stay
+      # sealed with STORE_CONFIG_KEY
+      STORE_CONFIG_PATH: /var/lib/store/config.json
+      # base64 of 32 random bytes (see .env.example); empty: store runs
+      # `degraded` and rejects config sets that carry credentials
+      STORE_CONFIG_KEY: ${STORE_CONFIG_KEY:-}
+    volumes:
+      # writable on the read-only root filesystem; the image creates the
+      # folder owned by uid 10001, so a new volume starts writable for it
+      - store-config:/var/lib/store
     tmpfs:
       - /tmp                     # JVM perf data and temporary files
     depends_on:
@@ -256,3 +267,4 @@ configs:
 volumes:
   postgres-data:
   propagator-config:            # propagator's local config file
+  store-config:                 # store's local config file (sealed credentials)
