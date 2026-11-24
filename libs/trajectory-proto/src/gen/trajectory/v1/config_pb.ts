@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file trajectory/v1/config.proto.
  */
 export const file_trajectory_v1_config: GenFile = /*@__PURE__*/
-  fileDesc("Chp0cmFqZWN0b3J5L3YxL2NvbmZpZy5wcm90bxINdHJhamVjdG9yeS52MSJFChBQcm9wYWdhdG9yQ29uZmlnEhoKEnByb3BhZ2F0aW9uX3RpbWVfcxgBIAEoARIVCg1zYW1wbGVfc3RlcF9zGAIgASgBInYKCUNvbmZpZ1NldBIPCgdzZXJ2aWNlGAEgASgJEhYKDmNvbmZpZ192ZXJzaW9uGAIgASgEEjUKCnByb3BhZ2F0b3IYAyABKAsyHy50cmFqZWN0b3J5LnYxLlByb3BhZ2F0b3JDb25maWdIAEIJCgdwYXlsb2FkItcBCg1Db25maWdBcHBsaWVkEg8KB3NlcnZpY2UYASABKAkSEAoIaW5zdGFuY2UYAiABKAkSFgoOY29uZmlnX3ZlcnNpb24YAyABKAQSCgoCb2sYBCABKAgSDQoFZXJyb3IYBSABKAkSLgoKYXBwbGllZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoKcHJvcGFnYXRvchgHIAEoCzIfLnRyYWplY3RvcnkudjEuUHJvcGFnYXRvckNvbmZpZ0gAQgkKB3BheWxvYWRiBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("Chp0cmFqZWN0b3J5L3YxL2NvbmZpZy5wcm90bxINdHJhamVjdG9yeS52MSJFChBQcm9wYWdhdG9yQ29uZmlnEhoKEnByb3BhZ2F0aW9uX3RpbWVfcxgBIAEoARIVCg1zYW1wbGVfc3RlcF9zGAIgASgBIkIKC1N0b3JlQ29uZmlnEhQKDHRhYmxlX3ByZWZpeBgBIAEoCRIdChVkYl9jcmVkZW50aWFsc19zZWFsZWQYAiABKAwiowEKCUNvbmZpZ1NldBIPCgdzZXJ2aWNlGAEgASgJEhYKDmNvbmZpZ192ZXJzaW9uGAIgASgEEjUKCnByb3BhZ2F0b3IYAyABKAsyHy50cmFqZWN0b3J5LnYxLlByb3BhZ2F0b3JDb25maWdIABIrCgVzdG9yZRgEIAEoCzIaLnRyYWplY3RvcnkudjEuU3RvcmVDb25maWdIAEIJCgdwYXlsb2FkIoQCCg1Db25maWdBcHBsaWVkEg8KB3NlcnZpY2UYASABKAkSEAoIaW5zdGFuY2UYAiABKAkSFgoOY29uZmlnX3ZlcnNpb24YAyABKAQSCgoCb2sYBCABKAgSDQoFZXJyb3IYBSABKAkSLgoKYXBwbGllZF9hdBgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASNQoKcHJvcGFnYXRvchgHIAEoCzIfLnRyYWplY3RvcnkudjEuUHJvcGFnYXRvckNvbmZpZ0gAEisKBXN0b3JlGAggASgLMhoudHJhamVjdG9yeS52MS5TdG9yZUNvbmZpZ0gAQgkKB3BheWxvYWRiBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
  * The runtime config of the propagator.
@@ -44,6 +44,38 @@ export const PropagatorConfigSchema: GenMessage<PropagatorConfig> = /*@__PURE__*
   messageDesc(file_trajectory_v1_config, 0);
 
 /**
+ * The runtime config of the store. Write-only credentials: see
+ * proto/README.md > Store config.
+ *
+ * @generated from message trajectory.v1.StoreConfig
+ */
+export type StoreConfig = Message<"trajectory.v1.StoreConfig"> & {
+  /**
+   * Empty, or ^[a-z][a-z0-9_]{0,15}$, used as is: "demo_" gives demo_launches.
+   *
+   * @generated from field: string table_prefix = 1;
+   */
+  tablePrefix: string;
+
+  /**
+   * AES-256-GCM with STORE_CONFIG_KEY: 12-byte nonce || ciphertext || 16-byte tag,
+   * additional data "trajectory.v1.StoreConfig". Plaintext: UTF-8 JSON
+   * {"user": "...", "password": "..."}. Empty in a ConfigSet: keep the current
+   * credentials. Always empty in a ConfigApplied (write-only).
+   *
+   * @generated from field: bytes db_credentials_sealed = 2;
+   */
+  dbCredentialsSealed: Uint8Array;
+};
+
+/**
+ * Describes the message trajectory.v1.StoreConfig.
+ * Use `create(StoreConfigSchema)` to create a new message.
+ */
+export const StoreConfigSchema: GenMessage<StoreConfig> = /*@__PURE__*/
+  messageDesc(file_trajectory_v1_config, 1);
+
+/**
  * A new config for a service, published by control-web. Subject
  * `config.<service>.set` (stream CONFIG keeps the latest per subject).
  *
@@ -65,8 +97,8 @@ export type ConfigSet = Message<"trajectory.v1.ConfigSet"> & {
   configVersion: bigint;
 
   /**
-   * The config of the service. The store and ros2-publisher payloads are
-   * added later as new fields.
+   * The config of the service. The ros2-publisher payload is added later as
+   * a new field.
    *
    * @generated from oneof trajectory.v1.ConfigSet.payload
    */
@@ -78,6 +110,14 @@ export type ConfigSet = Message<"trajectory.v1.ConfigSet"> & {
      */
     value: PropagatorConfig;
     case: "propagator";
+  } | {
+    /**
+     * The store config.
+     *
+     * @generated from field: trajectory.v1.StoreConfig store = 4;
+     */
+    value: StoreConfig;
+    case: "store";
   } | { case: undefined; value?: undefined };
 };
 
@@ -86,7 +126,7 @@ export type ConfigSet = Message<"trajectory.v1.ConfigSet"> & {
  * Use `create(ConfigSetSchema)` to create a new message.
  */
 export const ConfigSetSchema: GenMessage<ConfigSet> = /*@__PURE__*/
-  messageDesc(file_trajectory_v1_config, 1);
+  messageDesc(file_trajectory_v1_config, 2);
 
 /**
  * The answer of a service instance to a ConfigSet. Subject
@@ -150,6 +190,14 @@ export type ConfigApplied = Message<"trajectory.v1.ConfigApplied"> & {
      */
     value: PropagatorConfig;
     case: "propagator";
+  } | {
+    /**
+     * The store config (db_credentials_sealed always empty).
+     *
+     * @generated from field: trajectory.v1.StoreConfig store = 8;
+     */
+    value: StoreConfig;
+    case: "store";
   } | { case: undefined; value?: undefined };
 };
 
@@ -158,5 +206,5 @@ export type ConfigApplied = Message<"trajectory.v1.ConfigApplied"> & {
  * Use `create(ConfigAppliedSchema)` to create a new message.
  */
 export const ConfigAppliedSchema: GenMessage<ConfigApplied> = /*@__PURE__*/
-  messageDesc(file_trajectory_v1_config, 2);
+  messageDesc(file_trajectory_v1_config, 3);
 
