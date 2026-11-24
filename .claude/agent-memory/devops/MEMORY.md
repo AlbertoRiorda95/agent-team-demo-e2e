@@ -2,4 +2,4 @@
 - [Image vuln gate](project_image-vuln-gate.md) — trivy image gate fails Debian bases; use ubuntu:24.04/alpine, strip npm/pip
 - [buf binary in grype](project_buf-binary-grype.md) — vulnerabilities job scans Go modules inside @bufbuild/buf's binary (PR #54)
 - [Compose NATS](project_compose-nats.md) — nats.conf file for max_payload; no inline configs on read_only; nats-init skips existing streams
-- [Workflow push blocked](project_workflow-push-blocked.md) — CI token can't push .github/workflows/ changes; use --body-file for gh text
+- [Workflow push blocked](project_workflow-push-blocked.md) — CI token cannot push .github/workflows/ (try it, then reset and paste the diff in the PR); use --body-file
