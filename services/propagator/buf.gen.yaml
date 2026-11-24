@@ -1,0 +1,18 @@
+# services/propagator/buf.gen.yaml: the C++ code of the trajectory.v1 messages
+# for the propagator. It is committed under src/gen/ so the propagator builds
+# (Conan, Docker) without buf or network access, as api does for Python.
+# Do not run it directly: run scripts/generate-proto.sh (writes the code) or
+# scripts/generate-proto.sh --check (fails when the committed code is not in
+# step with proto/).
+# Version: C++ gencode only builds against the runtime of exactly its version
+# (`#if PROTOBUF_VERSION != ...`), and ConanCenter has protobuf 6.33.5 but no
+# 6.33.1: the plugin is v33.5 here and `protobuf/6.33.5` in conanfile.py. The
+# wire format is the same as the v33.1 code of the other services.
+version: v2
+inputs:
+  - directory: proto
+    paths:
+      - proto/trajectory
+plugins:
+  - remote: buf.build/protocolbuffers/cpp:v33.5
+    out: cpp

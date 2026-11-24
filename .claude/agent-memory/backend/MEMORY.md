@@ -3,3 +3,4 @@
 - [Web server workspaces](project_web_server_workspaces.md) — *-web/server packages need devops to add them to root workspaces
 - [Web server lib in image](project_web-server-lib-in-image.md) — workspace lib import breaks the devops image at runtime; CI never runs images
 - [Proto lib version bump](project_proto-version-bump.md) — bump pinned workspace deps + lockfile; api gencode drift not enforced by CI
+- [C++ protobuf version](project_cpp-protobuf-version.md) — gencode needs exact runtime; propagator on cpp v33.5 + Conan protobuf/6.33.5

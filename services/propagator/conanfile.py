@@ -20,6 +20,9 @@ class PropagatorConan(ConanFile):
 
     def requirements(self):
         self.requires("cnats/3.14.0")
+        # The runtime of the committed generated code (src/gen/): the C++
+        # gencode checks that the runtime is exactly its version (buf.gen.yaml).
+        self.requires("protobuf/6.33.5")
 
     def build_requirements(self):
         self.test_requires("gtest/1.18.0")
