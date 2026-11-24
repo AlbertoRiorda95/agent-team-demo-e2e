@@ -1,0 +1,15 @@
+# services/store/buf.gen.yaml: the Java code of the trajectory.v1 messages for
+# the store. It is committed under src/main/generated/ so the store builds
+# (Gradle, Docker) without buf or network access, as api does for Python.
+# Do not run it directly: run scripts/generate-proto.sh (writes the code) or
+# scripts/generate-proto.sh --check (fails when the committed code is not in
+# step with proto/). Same remote plugin and version as the root buf.gen.yaml
+# (protobuf v33.1): protobuf-java in build.gradle.kts stays on 4.33.1.
+version: v2
+inputs:
+  - directory: proto
+    paths:
+      - proto/trajectory
+plugins:
+  - remote: buf.build/protocolbuffers/java:v33.1
+    out: java

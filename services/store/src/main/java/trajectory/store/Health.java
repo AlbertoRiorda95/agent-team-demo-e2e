@@ -1,10 +1,10 @@
 package trajectory.store;
 
-/** Health of the service: {@code ok} when the schema is migrated and NATS is connected. */
+/** Health of the service: {@code ok} when the database, NATS and the consumer are all up. */
 public enum Health {
-  /** Migrated and connected. */
+  /** Database, NATS and consumer up. */
   OK,
-  /** Still waiting for PostgreSQL or NATS, or NATS lost: the service keeps retrying. */
+  /** Something is down: the service keeps retrying (see {@link ServiceHealth.Report#detail}). */
   DEGRADED;
 
   /** "ok" or "degraded", as in the logs. */
