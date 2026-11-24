@@ -67,6 +67,10 @@ class PropagatorConfig;
 struct PropagatorConfigDefaultTypeInternal;
 extern PropagatorConfigDefaultTypeInternal _PropagatorConfig_default_instance_;
 extern const ::google::protobuf::internal::ClassDataFull PropagatorConfig_class_data_;
+class StoreConfig;
+struct StoreConfigDefaultTypeInternal;
+extern StoreConfigDefaultTypeInternal _StoreConfig_default_instance_;
+extern const ::google::protobuf::internal::ClassDataFull StoreConfig_class_data_;
 }  // namespace v1
 }  // namespace trajectory
 namespace google {
@@ -80,6 +84,218 @@ namespace v1 {
 // ===================================================================
 
 
+// -------------------------------------------------------------------
+
+class StoreConfig final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:trajectory.v1.StoreConfig) */ {
+ public:
+  inline StoreConfig() : StoreConfig(nullptr) {}
+  ~StoreConfig() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(StoreConfig* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(StoreConfig));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR StoreConfig(::google::protobuf::internal::ConstantInitialized);
+
+  inline StoreConfig(const StoreConfig& from) : StoreConfig(nullptr, from) {}
+  inline StoreConfig(StoreConfig&& from) noexcept
+      : StoreConfig(nullptr, ::std::move(from)) {}
+  inline StoreConfig& operator=(const StoreConfig& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline StoreConfig& operator=(StoreConfig&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const StoreConfig& default_instance() {
+    return *reinterpret_cast<const StoreConfig*>(
+        &_StoreConfig_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 1;
+  friend void swap(StoreConfig& a, StoreConfig& b) { a.Swap(&b); }
+  inline void Swap(StoreConfig* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(StoreConfig* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  StoreConfig* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<StoreConfig>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const StoreConfig& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const StoreConfig& from) { StoreConfig::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
+                        const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(StoreConfig* PROTOBUF_NONNULL other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "trajectory.v1.StoreConfig"; }
+
+  explicit StoreConfig(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  StoreConfig(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const StoreConfig& from);
+  StoreConfig(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, StoreConfig&& from) noexcept
+      : StoreConfig(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
+  static void* PROTOBUF_NONNULL PlacementNew_(
+      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static constexpr auto InternalNewImpl_();
+
+ public:
+  static constexpr auto InternalGenerateClassData_();
+
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kTablePrefixFieldNumber = 1,
+    kDbCredentialsSealedFieldNumber = 2,
+  };
+  // string table_prefix = 1 [json_name = "tablePrefix"];
+  void clear_table_prefix() ;
+  const ::std::string& table_prefix() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_table_prefix(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_table_prefix();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_table_prefix();
+  void set_allocated_table_prefix(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_table_prefix() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_table_prefix(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_table_prefix();
+
+  public:
+  // bytes db_credentials_sealed = 2 [json_name = "dbCredentialsSealed"];
+  void clear_db_credentials_sealed() ;
+  const ::std::string& db_credentials_sealed() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_db_credentials_sealed(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_db_credentials_sealed();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_db_credentials_sealed();
+  void set_allocated_db_credentials_sealed(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_db_credentials_sealed() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_db_credentials_sealed(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_db_credentials_sealed();
+
+  public:
+  // @@protoc_insertion_point(class_scope:trajectory.v1.StoreConfig)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<1, 2,
+                                   0, 46,
+                                   2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+        const StoreConfig& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::internal::ArenaStringPtr table_prefix_;
+    ::google::protobuf::internal::ArenaStringPtr db_credentials_sealed_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_trajectory_2fv1_2fconfig_2eproto;
+};
+
+extern const ::google::protobuf::internal::ClassDataFull StoreConfig_class_data_;
 // -------------------------------------------------------------------
 
 class PropagatorConfig final : public ::google::protobuf::Message
@@ -341,9 +557,10 @@ class ConfigSet final : public ::google::protobuf::Message
   }
   enum PayloadCase {
     kPropagator = 3,
+    kStore = 4,
     PAYLOAD_NOT_SET = 0,
   };
-  static constexpr int kIndexInFileMessages = 1;
+  static constexpr int kIndexInFileMessages = 2;
   friend void swap(ConfigSet& a, ConfigSet& b) { a.Swap(&b); }
   inline void Swap(ConfigSet* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -433,6 +650,7 @@ class ConfigSet final : public ::google::protobuf::Message
     kServiceFieldNumber = 1,
     kConfigVersionFieldNumber = 2,
     kPropagatorFieldNumber = 3,
+    kStoreFieldNumber = 4,
   };
   // string service = 1 [json_name = "service"];
   void clear_service() ;
@@ -478,17 +696,37 @@ class ConfigSet final : public ::google::protobuf::Message
   ::trajectory::v1::PropagatorConfig* PROTOBUF_NONNULL _internal_mutable_propagator();
 
   public:
+  // .trajectory.v1.StoreConfig store = 4 [json_name = "store"];
+  bool has_store() const;
+  private:
+  bool _internal_has_store() const;
+
+  public:
+  void clear_store() ;
+  const ::trajectory::v1::StoreConfig& store() const;
+  [[nodiscard]] ::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE release_store();
+  ::trajectory::v1::StoreConfig* PROTOBUF_NONNULL mutable_store();
+  void set_allocated_store(::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE value);
+  void unsafe_arena_set_allocated_store(::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE value);
+  ::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE unsafe_arena_release_store();
+
+  private:
+  const ::trajectory::v1::StoreConfig& _internal_store() const;
+  ::trajectory::v1::StoreConfig* PROTOBUF_NONNULL _internal_mutable_store();
+
+  public:
   void clear_payload();
   PayloadCase payload_case() const;
   // @@protoc_insertion_point(class_scope:trajectory.v1.ConfigSet)
  private:
   class _Internal;
   void set_has_propagator();
+  void set_has_store();
   inline bool has_payload() const;
   inline void clear_has_payload();
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 3,
-                                   1, 39,
+  static const ::google::protobuf::internal::TcParseTable<1, 4,
+                                   2, 39,
                                    2>
       _table_;
 
@@ -515,6 +753,7 @@ class ConfigSet final : public ::google::protobuf::Message
       constexpr PayloadUnion() : _constinit_{} {}
       ::google::protobuf::internal::ConstantInitialized _constinit_;
       ::trajectory::v1::PropagatorConfig* PROTOBUF_NULLABLE propagator_;
+      ::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE store_;
     } payload_;
     ::uint32_t _oneof_case_[1];
     PROTOBUF_TSAN_DECLARE_MEMBER
@@ -583,9 +822,10 @@ class ConfigApplied final : public ::google::protobuf::Message
   }
   enum PayloadCase {
     kPropagator = 7,
+    kStore = 8,
     PAYLOAD_NOT_SET = 0,
   };
-  static constexpr int kIndexInFileMessages = 2;
+  static constexpr int kIndexInFileMessages = 3;
   friend void swap(ConfigApplied& a, ConfigApplied& b) { a.Swap(&b); }
   inline void Swap(ConfigApplied* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -679,6 +919,7 @@ class ConfigApplied final : public ::google::protobuf::Message
     kConfigVersionFieldNumber = 3,
     kOkFieldNumber = 4,
     kPropagatorFieldNumber = 7,
+    kStoreFieldNumber = 8,
   };
   // string service = 1 [json_name = "service"];
   void clear_service() ;
@@ -779,17 +1020,37 @@ class ConfigApplied final : public ::google::protobuf::Message
   ::trajectory::v1::PropagatorConfig* PROTOBUF_NONNULL _internal_mutable_propagator();
 
   public:
+  // .trajectory.v1.StoreConfig store = 8 [json_name = "store"];
+  bool has_store() const;
+  private:
+  bool _internal_has_store() const;
+
+  public:
+  void clear_store() ;
+  const ::trajectory::v1::StoreConfig& store() const;
+  [[nodiscard]] ::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE release_store();
+  ::trajectory::v1::StoreConfig* PROTOBUF_NONNULL mutable_store();
+  void set_allocated_store(::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE value);
+  void unsafe_arena_set_allocated_store(::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE value);
+  ::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE unsafe_arena_release_store();
+
+  private:
+  const ::trajectory::v1::StoreConfig& _internal_store() const;
+  ::trajectory::v1::StoreConfig* PROTOBUF_NONNULL _internal_mutable_store();
+
+  public:
   void clear_payload();
   PayloadCase payload_case() const;
   // @@protoc_insertion_point(class_scope:trajectory.v1.ConfigApplied)
  private:
   class _Internal;
   void set_has_propagator();
+  void set_has_store();
   inline bool has_payload() const;
   inline void clear_has_payload();
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 7,
-                                   2, 56,
+  static const ::google::protobuf::internal::TcParseTable<3, 8,
+                                   3, 64,
                                    2>
       _table_;
 
@@ -820,6 +1081,7 @@ class ConfigApplied final : public ::google::protobuf::Message
       constexpr PayloadUnion() : _constinit_{} {}
       ::google::protobuf::internal::ConstantInitialized _constinit_;
       ::trajectory::v1::PropagatorConfig* PROTOBUF_NULLABLE propagator_;
+      ::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE store_;
     } payload_;
     ::uint32_t _oneof_case_[1];
     PROTOBUF_TSAN_DECLARE_MEMBER
@@ -894,6 +1156,140 @@ inline double PropagatorConfig::_internal_sample_step_s() const {
 inline void PropagatorConfig::_internal_set_sample_step_s(double value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.sample_step_s_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// StoreConfig
+
+// string table_prefix = 1 [json_name = "tablePrefix"];
+inline void StoreConfig::clear_table_prefix() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.table_prefix_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline const ::std::string& StoreConfig::table_prefix() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:trajectory.v1.StoreConfig.table_prefix)
+  return _internal_table_prefix();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void StoreConfig::set_table_prefix(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.table_prefix_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:trajectory.v1.StoreConfig.table_prefix)
+}
+inline ::std::string* PROTOBUF_NONNULL StoreConfig::mutable_table_prefix()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ::std::string* _s = _internal_mutable_table_prefix();
+  // @@protoc_insertion_point(field_mutable:trajectory.v1.StoreConfig.table_prefix)
+  return _s;
+}
+inline const ::std::string& StoreConfig::_internal_table_prefix() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.table_prefix_.Get();
+}
+inline void StoreConfig::_internal_set_table_prefix(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.table_prefix_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL StoreConfig::_internal_mutable_table_prefix() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.table_prefix_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE StoreConfig::release_table_prefix() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:trajectory.v1.StoreConfig.table_prefix)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000001U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  auto* released = _impl_.table_prefix_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.table_prefix_.Set("", GetArena());
+  }
+  return released;
+}
+inline void StoreConfig::set_allocated_table_prefix(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  }
+  _impl_.table_prefix_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.table_prefix_.IsDefault()) {
+    _impl_.table_prefix_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:trajectory.v1.StoreConfig.table_prefix)
+}
+
+// bytes db_credentials_sealed = 2 [json_name = "dbCredentialsSealed"];
+inline void StoreConfig::clear_db_credentials_sealed() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.db_credentials_sealed_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline const ::std::string& StoreConfig::db_credentials_sealed() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:trajectory.v1.StoreConfig.db_credentials_sealed)
+  return _internal_db_credentials_sealed();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void StoreConfig::set_db_credentials_sealed(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.db_credentials_sealed_.SetBytes(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:trajectory.v1.StoreConfig.db_credentials_sealed)
+}
+inline ::std::string* PROTOBUF_NONNULL StoreConfig::mutable_db_credentials_sealed()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::std::string* _s = _internal_mutable_db_credentials_sealed();
+  // @@protoc_insertion_point(field_mutable:trajectory.v1.StoreConfig.db_credentials_sealed)
+  return _s;
+}
+inline const ::std::string& StoreConfig::_internal_db_credentials_sealed() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.db_credentials_sealed_.Get();
+}
+inline void StoreConfig::_internal_set_db_credentials_sealed(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.db_credentials_sealed_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL StoreConfig::_internal_mutable_db_credentials_sealed() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.db_credentials_sealed_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE StoreConfig::release_db_credentials_sealed() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:trajectory.v1.StoreConfig.db_credentials_sealed)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000002U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  auto* released = _impl_.db_credentials_sealed_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.db_credentials_sealed_.Set("", GetArena());
+  }
+  return released;
+}
+inline void StoreConfig::set_allocated_db_credentials_sealed(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+  _impl_.db_credentials_sealed_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.db_credentials_sealed_.IsDefault()) {
+    _impl_.db_credentials_sealed_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:trajectory.v1.StoreConfig.db_credentials_sealed)
 }
 
 // -------------------------------------------------------------------
@@ -1069,6 +1465,88 @@ inline ::trajectory::v1::PropagatorConfig* PROTOBUF_NONNULL ConfigSet::mutable_p
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
   ::trajectory::v1::PropagatorConfig* _msg = _internal_mutable_propagator();
   // @@protoc_insertion_point(field_mutable:trajectory.v1.ConfigSet.propagator)
+  return _msg;
+}
+
+// .trajectory.v1.StoreConfig store = 4 [json_name = "store"];
+inline bool ConfigSet::has_store() const {
+  return payload_case() == kStore;
+}
+inline bool ConfigSet::_internal_has_store() const {
+  return payload_case() == kStore;
+}
+inline void ConfigSet::set_has_store() {
+  _impl_._oneof_case_[0] = kStore;
+}
+inline void ConfigSet::clear_store() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (payload_case() == kStore) {
+    if (GetArena() == nullptr) {
+      delete _impl_.payload_.store_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.store_);
+    }
+    clear_has_payload();
+  }
+}
+inline ::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE ConfigSet::release_store() {
+  // @@protoc_insertion_point(field_release:trajectory.v1.ConfigSet.store)
+  if (payload_case() == kStore) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.store_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.payload_.store_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::trajectory::v1::StoreConfig& ConfigSet::_internal_store() const {
+  return payload_case() == kStore ? static_cast<const ::trajectory::v1::StoreConfig&>(*_impl_.payload_.store_)
+                     : reinterpret_cast<const ::trajectory::v1::StoreConfig&>(::trajectory::v1::_StoreConfig_default_instance_);
+}
+inline const ::trajectory::v1::StoreConfig& ConfigSet::store() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:trajectory.v1.ConfigSet.store)
+  return _internal_store();
+}
+inline ::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE ConfigSet::unsafe_arena_release_store() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:trajectory.v1.ConfigSet.store)
+  if (payload_case() == kStore) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.store_;
+    _impl_.payload_.store_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void ConfigSet::unsafe_arena_set_allocated_store(
+    ::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_payload();
+  if (value) {
+    set_has_store();
+    _impl_.payload_.store_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:trajectory.v1.ConfigSet.store)
+}
+inline ::trajectory::v1::StoreConfig* PROTOBUF_NONNULL ConfigSet::_internal_mutable_store() {
+  if (payload_case() != kStore) {
+    clear_payload();
+    set_has_store();
+    _impl_.payload_.store_ = 
+        ::google::protobuf::Message::DefaultConstruct<::trajectory::v1::StoreConfig>(GetArena());
+  }
+  return _impl_.payload_.store_;
+}
+inline ::trajectory::v1::StoreConfig* PROTOBUF_NONNULL ConfigSet::mutable_store()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::trajectory::v1::StoreConfig* _msg = _internal_mutable_store();
+  // @@protoc_insertion_point(field_mutable:trajectory.v1.ConfigSet.store)
   return _msg;
 }
 
@@ -1502,6 +1980,88 @@ inline ::trajectory::v1::PropagatorConfig* PROTOBUF_NONNULL ConfigApplied::mutab
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
   ::trajectory::v1::PropagatorConfig* _msg = _internal_mutable_propagator();
   // @@protoc_insertion_point(field_mutable:trajectory.v1.ConfigApplied.propagator)
+  return _msg;
+}
+
+// .trajectory.v1.StoreConfig store = 8 [json_name = "store"];
+inline bool ConfigApplied::has_store() const {
+  return payload_case() == kStore;
+}
+inline bool ConfigApplied::_internal_has_store() const {
+  return payload_case() == kStore;
+}
+inline void ConfigApplied::set_has_store() {
+  _impl_._oneof_case_[0] = kStore;
+}
+inline void ConfigApplied::clear_store() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (payload_case() == kStore) {
+    if (GetArena() == nullptr) {
+      delete _impl_.payload_.store_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.store_);
+    }
+    clear_has_payload();
+  }
+}
+inline ::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE ConfigApplied::release_store() {
+  // @@protoc_insertion_point(field_release:trajectory.v1.ConfigApplied.store)
+  if (payload_case() == kStore) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.store_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.payload_.store_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::trajectory::v1::StoreConfig& ConfigApplied::_internal_store() const {
+  return payload_case() == kStore ? static_cast<const ::trajectory::v1::StoreConfig&>(*_impl_.payload_.store_)
+                     : reinterpret_cast<const ::trajectory::v1::StoreConfig&>(::trajectory::v1::_StoreConfig_default_instance_);
+}
+inline const ::trajectory::v1::StoreConfig& ConfigApplied::store() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:trajectory.v1.ConfigApplied.store)
+  return _internal_store();
+}
+inline ::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE ConfigApplied::unsafe_arena_release_store() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:trajectory.v1.ConfigApplied.store)
+  if (payload_case() == kStore) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.store_;
+    _impl_.payload_.store_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void ConfigApplied::unsafe_arena_set_allocated_store(
+    ::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_payload();
+  if (value) {
+    set_has_store();
+    _impl_.payload_.store_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:trajectory.v1.ConfigApplied.store)
+}
+inline ::trajectory::v1::StoreConfig* PROTOBUF_NONNULL ConfigApplied::_internal_mutable_store() {
+  if (payload_case() != kStore) {
+    clear_payload();
+    set_has_store();
+    _impl_.payload_.store_ = 
+        ::google::protobuf::Message::DefaultConstruct<::trajectory::v1::StoreConfig>(GetArena());
+  }
+  return _impl_.payload_.store_;
+}
+inline ::trajectory::v1::StoreConfig* PROTOBUF_NONNULL ConfigApplied::mutable_store()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::trajectory::v1::StoreConfig* _msg = _internal_mutable_store();
+  // @@protoc_insertion_point(field_mutable:trajectory.v1.ConfigApplied.store)
   return _msg;
 }
 

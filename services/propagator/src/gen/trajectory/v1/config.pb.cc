@@ -27,6 +27,36 @@ namespace _fl = ::google::protobuf::internal::field_layout;
 namespace trajectory {
 namespace v1 {
 
+inline constexpr StoreConfig::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : _cached_size_{0},
+        table_prefix_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        db_credentials_sealed_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()) {}
+
+template <typename>
+PROTOBUF_CONSTEXPR StoreConfig::StoreConfig(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(StoreConfig_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct StoreConfigDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR StoreConfigDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~StoreConfigDefaultTypeInternal() {}
+  union {
+    StoreConfig _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 StoreConfigDefaultTypeInternal _StoreConfig_default_instance_;
+
 inline constexpr PropagatorConfig::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : _cached_size_{0},
@@ -136,27 +166,37 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::PropagatorConfig, _impl_.sample_step_s_),
         0,
         1,
+        0x081, // bitmap
+        PROTOBUF_FIELD_OFFSET(::trajectory::v1::StoreConfig, _impl_._has_bits_),
+        5, // hasbit index offset
+        PROTOBUF_FIELD_OFFSET(::trajectory::v1::StoreConfig, _impl_.table_prefix_),
+        PROTOBUF_FIELD_OFFSET(::trajectory::v1::StoreConfig, _impl_.db_credentials_sealed_),
+        0,
+        1,
         0x085, // bitmap
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigSet, _impl_._has_bits_),
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigSet, _impl_._oneof_case_[0]),
-        8, // hasbit index offset
+        9, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigSet, _impl_.service_),
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigSet, _impl_.config_version_),
+        PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigSet, _impl_.payload_),
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigSet, _impl_.payload_),
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigSet, _impl_.payload_),
         0,
         1,
         ~0u,
+        ~0u,
         0x085, // bitmap
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigApplied, _impl_._has_bits_),
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigApplied, _impl_._oneof_case_[0]),
-        12, // hasbit index offset
+        13, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigApplied, _impl_.service_),
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigApplied, _impl_.instance_),
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigApplied, _impl_.config_version_),
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigApplied, _impl_.ok_),
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigApplied, _impl_.error_),
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigApplied, _impl_.applied_at_),
+        PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigApplied, _impl_.payload_),
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigApplied, _impl_.payload_),
         PROTOBUF_FIELD_OFFSET(::trajectory::v1::ConfigApplied, _impl_.payload_),
         0,
@@ -166,16 +206,19 @@ const ::uint32_t
         2,
         3,
         ~0u,
+        ~0u,
 };
 
 static const ::_pbi::MigrationSchema
     schemas[] ABSL_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
         {0, sizeof(::trajectory::v1::PropagatorConfig)},
-        {7, sizeof(::trajectory::v1::ConfigSet)},
-        {18, sizeof(::trajectory::v1::ConfigApplied)},
+        {7, sizeof(::trajectory::v1::StoreConfig)},
+        {14, sizeof(::trajectory::v1::ConfigSet)},
+        {27, sizeof(::trajectory::v1::ConfigApplied)},
 };
 static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::trajectory::v1::_PropagatorConfig_default_instance_._instance,
+    &::trajectory::v1::_StoreConfig_default_instance_._instance,
     &::trajectory::v1::_ConfigSet_default_instance_._instance,
     &::trajectory::v1::_ConfigApplied_default_instance_._instance,
 };
@@ -185,18 +228,23 @@ const char descriptor_table_protodef_trajectory_2fv1_2fconfig_2eproto[] ABSL_ATT
     ".v1\032\037google/protobuf/timestamp.proto\"d\n\020"
     "PropagatorConfig\022,\n\022propagation_time_s\030\001"
     " \001(\001R\020propagationTimeS\022\"\n\rsample_step_s\030"
-    "\002 \001(\001R\013sampleStepS\"\232\001\n\tConfigSet\022\030\n\007serv"
-    "ice\030\001 \001(\tR\007service\022%\n\016config_version\030\002 \001"
-    "(\004R\rconfigVersion\022A\n\npropagator\030\003 \001(\0132\037."
+    "\002 \001(\001R\013sampleStepS\"d\n\013StoreConfig\022!\n\014tab"
+    "le_prefix\030\001 \001(\tR\013tablePrefix\0222\n\025db_crede"
+    "ntials_sealed\030\002 \001(\014R\023dbCredentialsSealed"
+    "\"\316\001\n\tConfigSet\022\030\n\007service\030\001 \001(\tR\007service"
+    "\022%\n\016config_version\030\002 \001(\004R\rconfigVersion\022"
+    "A\n\npropagator\030\003 \001(\0132\037.trajectory.v1.Prop"
+    "agatorConfigH\000R\npropagator\0222\n\005store\030\004 \001("
+    "\0132\032.trajectory.v1.StoreConfigH\000R\005storeB\t"
+    "\n\007payload\"\317\002\n\rConfigApplied\022\030\n\007service\030\001"
+    " \001(\tR\007service\022\032\n\010instance\030\002 \001(\tR\010instanc"
+    "e\022%\n\016config_version\030\003 \001(\004R\rconfigVersion"
+    "\022\016\n\002ok\030\004 \001(\010R\002ok\022\024\n\005error\030\005 \001(\tR\005error\0229"
+    "\n\napplied_at\030\006 \001(\0132\032.google.protobuf.Tim"
+    "estampR\tappliedAt\022A\n\npropagator\030\007 \001(\0132\037."
     "trajectory.v1.PropagatorConfigH\000R\npropag"
-    "atorB\t\n\007payload\"\233\002\n\rConfigApplied\022\030\n\007ser"
-    "vice\030\001 \001(\tR\007service\022\032\n\010instance\030\002 \001(\tR\010i"
-    "nstance\022%\n\016config_version\030\003 \001(\004R\rconfigV"
-    "ersion\022\016\n\002ok\030\004 \001(\010R\002ok\022\024\n\005error\030\005 \001(\tR\005e"
-    "rror\0229\n\napplied_at\030\006 \001(\0132\032.google.protob"
-    "uf.TimestampR\tappliedAt\022A\n\npropagator\030\007 "
-    "\001(\0132\037.trajectory.v1.PropagatorConfigH\000R\n"
-    "propagatorB\t\n\007payloadb\006proto3"
+    "ator\0222\n\005store\030\010 \001(\0132\032.trajectory.v1.Stor"
+    "eConfigH\000R\005storeB\t\n\007payloadb\006proto3"
 };
 static const ::_pbi::DescriptorTable* PROTOBUF_NONNULL const
     descriptor_table_trajectory_2fv1_2fconfig_2eproto_deps[1] = {
@@ -206,13 +254,13 @@ static ::absl::once_flag descriptor_table_trajectory_2fv1_2fconfig_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_trajectory_2fv1_2fconfig_2eproto = {
     false,
     false,
-    629,
+    835,
     descriptor_table_protodef_trajectory_2fv1_2fconfig_2eproto,
     "trajectory/v1/config.proto",
     &descriptor_table_trajectory_2fv1_2fconfig_2eproto_once,
     descriptor_table_trajectory_2fv1_2fconfig_2eproto_deps,
     1,
-    3,
+    4,
     schemas,
     file_default_instances,
     TableStruct_trajectory_2fv1_2fconfig_2eproto::offsets,
@@ -514,6 +562,323 @@ void PropagatorConfig::InternalSwap(PropagatorConfig* PROTOBUF_RESTRICT PROTOBUF
 }
 // ===================================================================
 
+class StoreConfig::_Internal {
+ public:
+  using HasBits =
+      decltype(::std::declval<StoreConfig>()._impl_._has_bits_);
+  static constexpr ::int32_t kHasBitsOffset =
+      8 * PROTOBUF_FIELD_OFFSET(StoreConfig, _impl_._has_bits_);
+};
+
+StoreConfig::StoreConfig(::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, StoreConfig_class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:trajectory.v1.StoreConfig)
+}
+PROTOBUF_NDEBUG_INLINE StoreConfig::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+    [[maybe_unused]] const ::trajectory::v1::StoreConfig& from_msg)
+      : _has_bits_{from._has_bits_},
+        _cached_size_{0},
+        table_prefix_(arena, from.table_prefix_),
+        db_credentials_sealed_(arena, from.db_credentials_sealed_) {}
+
+StoreConfig::StoreConfig(
+    ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
+    const StoreConfig& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, StoreConfig_class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  StoreConfig* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+
+  // @@protoc_insertion_point(copy_constructor:trajectory.v1.StoreConfig)
+}
+PROTOBUF_NDEBUG_INLINE StoreConfig::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
+      : _cached_size_{0},
+        table_prefix_(arena),
+        db_credentials_sealed_(arena) {}
+
+inline void StoreConfig::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+}
+StoreConfig::~StoreConfig() {
+  // @@protoc_insertion_point(destructor:trajectory.v1.StoreConfig)
+  SharedDtor(*this);
+}
+inline void StoreConfig::SharedDtor(MessageLite& self) {
+  StoreConfig& this_ = static_cast<StoreConfig&>(self);
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    this_.CheckHasBitConsistency();
+  }
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.table_prefix_.Destroy();
+  this_._impl_.db_credentials_sealed_.Destroy();
+  this_._impl_.~Impl_();
+}
+
+inline void* PROTOBUF_NONNULL StoreConfig::PlacementNew_(
+    const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+    ::google::protobuf::Arena* PROTOBUF_NULLABLE arena) {
+  return ::new (mem) StoreConfig(arena);
+}
+constexpr auto StoreConfig::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(StoreConfig),
+                                            alignof(StoreConfig));
+}
+constexpr auto StoreConfig::InternalGenerateClassData_() {
+  return ::google::protobuf::internal::ClassDataFull{
+      ::google::protobuf::internal::ClassData{
+          &_StoreConfig_default_instance_._instance,
+          &_table_.header,
+          nullptr,  // OnDemandRegisterArenaDtor
+          nullptr,  // IsInitialized
+          &StoreConfig::MergeImpl,
+          ::google::protobuf::Message::GetNewImpl<StoreConfig>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+          &StoreConfig::SharedDtor,
+          ::google::protobuf::Message::GetClearImpl<StoreConfig>(), &StoreConfig::ByteSizeLong,
+              &StoreConfig::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          PROTOBUF_FIELD_OFFSET(StoreConfig, _impl_._cached_size_),
+          false,
+      },
+      &StoreConfig::kDescriptorMethods,
+      &descriptor_table_trajectory_2fv1_2fconfig_2eproto,
+      nullptr,  // tracker
+  };
+}
+
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 const
+    ::google::protobuf::internal::ClassDataFull StoreConfig_class_data_ =
+        StoreConfig::InternalGenerateClassData_();
+
+PROTOBUF_ATTRIBUTE_WEAK const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL
+StoreConfig::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&StoreConfig_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(StoreConfig_class_data_.tc_table);
+  return StoreConfig_class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<1, 2, 0, 46, 2>
+StoreConfig::_table_ = {
+  {
+    PROTOBUF_FIELD_OFFSET(StoreConfig, _impl_._has_bits_),
+    0, // no _extensions_
+    2, 8,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967292,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    2,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    StoreConfig_class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::trajectory::v1::StoreConfig>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    // bytes db_credentials_sealed = 2 [json_name = "dbCredentialsSealed"];
+    {::_pbi::TcParser::FastBS1,
+     {18, 1, 0,
+      PROTOBUF_FIELD_OFFSET(StoreConfig, _impl_.db_credentials_sealed_)}},
+    // string table_prefix = 1 [json_name = "tablePrefix"];
+    {::_pbi::TcParser::FastUS1,
+     {10, 0, 0,
+      PROTOBUF_FIELD_OFFSET(StoreConfig, _impl_.table_prefix_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // string table_prefix = 1 [json_name = "tablePrefix"];
+    {PROTOBUF_FIELD_OFFSET(StoreConfig, _impl_.table_prefix_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // bytes db_credentials_sealed = 2 [json_name = "dbCredentialsSealed"];
+    {PROTOBUF_FIELD_OFFSET(StoreConfig, _impl_.db_credentials_sealed_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kBytes | ::_fl::kRepAString)},
+  }},
+  // no aux_entries
+  {{
+    "\31\14\0\0\0\0\0\0"
+    "trajectory.v1.StoreConfig"
+    "table_prefix"
+  }},
+};
+PROTOBUF_NOINLINE void StoreConfig::Clear() {
+// @@protoc_insertion_point(message_clear_start:trajectory.v1.StoreConfig)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      _impl_.table_prefix_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      _impl_.db_credentials_sealed_.ClearNonDefaultToEmpty();
+    }
+  }
+  _impl_._has_bits_.Clear();
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+::uint8_t* PROTOBUF_NONNULL StoreConfig::_InternalSerialize(
+    const ::google::protobuf::MessageLite& base, ::uint8_t* PROTOBUF_NONNULL target,
+    ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) {
+  const StoreConfig& this_ = static_cast<const StoreConfig&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+::uint8_t* PROTOBUF_NONNULL StoreConfig::_InternalSerialize(
+    ::uint8_t* PROTOBUF_NONNULL target,
+    ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+  const StoreConfig& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    this_.CheckHasBitConsistency();
+  }
+  // @@protoc_insertion_point(serialize_to_array_start:trajectory.v1.StoreConfig)
+  ::uint32_t cached_has_bits = 0;
+  (void)cached_has_bits;
+
+  cached_has_bits = this_._impl_._has_bits_[0];
+  // string table_prefix = 1 [json_name = "tablePrefix"];
+  if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+    if (!this_._internal_table_prefix().empty()) {
+      const ::std::string& _s = this_._internal_table_prefix();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "trajectory.v1.StoreConfig.table_prefix");
+      target = stream->WriteStringMaybeAliased(1, _s, target);
+    }
+  }
+
+  // bytes db_credentials_sealed = 2 [json_name = "dbCredentialsSealed"];
+  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+    if (!this_._internal_db_credentials_sealed().empty()) {
+      const ::std::string& _s = this_._internal_db_credentials_sealed();
+      target = stream->WriteBytesMaybeAliased(2, _s, target);
+    }
+  }
+
+  if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+    target =
+        ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+            this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:trajectory.v1.StoreConfig)
+  return target;
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+::size_t StoreConfig::ByteSizeLong(const MessageLite& base) {
+  const StoreConfig& this_ = static_cast<const StoreConfig&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+::size_t StoreConfig::ByteSizeLong() const {
+  const StoreConfig& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  // @@protoc_insertion_point(message_byte_size_start:trajectory.v1.StoreConfig)
+  ::size_t total_size = 0;
+
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void)cached_has_bits;
+
+  ::_pbi::Prefetch5LinesFrom7Lines(&this_);
+  cached_has_bits = this_._impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+    // string table_prefix = 1 [json_name = "tablePrefix"];
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      if (!this_._internal_table_prefix().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_table_prefix());
+      }
+    }
+    // bytes db_credentials_sealed = 2 [json_name = "dbCredentialsSealed"];
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!this_._internal_db_credentials_sealed().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::BytesSize(
+                                        this_._internal_db_credentials_sealed());
+      }
+    }
+  }
+  return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                             &this_._impl_._cached_size_);
+}
+
+void StoreConfig::MergeImpl(::google::protobuf::MessageLite& to_msg,
+                            const ::google::protobuf::MessageLite& from_msg) {
+   auto* const _this =
+      static_cast<StoreConfig*>(&to_msg);
+  auto& from = static_cast<const StoreConfig&>(from_msg);
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    from.CheckHasBitConsistency();
+  }
+  // @@protoc_insertion_point(class_specific_merge_from_start:trajectory.v1.StoreConfig)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void)cached_has_bits;
+
+  cached_has_bits = from._impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      if (!from._internal_table_prefix().empty()) {
+        _this->_internal_set_table_prefix(from._internal_table_prefix());
+      } else {
+        if (_this->_impl_.table_prefix_.IsDefault()) {
+          _this->_internal_set_table_prefix("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!from._internal_db_credentials_sealed().empty()) {
+        _this->_internal_set_db_credentials_sealed(from._internal_db_credentials_sealed());
+      } else {
+        if (_this->_impl_.db_credentials_sealed_.IsDefault()) {
+          _this->_internal_set_db_credentials_sealed("");
+        }
+      }
+    }
+  }
+  _this->_impl_._has_bits_[0] |= cached_has_bits;
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+}
+
+void StoreConfig::CopyFrom(const StoreConfig& from) {
+  // @@protoc_insertion_point(class_specific_copy_from_start:trajectory.v1.StoreConfig)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void StoreConfig::InternalSwap(StoreConfig* PROTOBUF_RESTRICT PROTOBUF_NONNULL other) {
+  using ::std::swap;
+  auto* arena = GetArena();
+  ABSL_DCHECK_EQ(arena, other->GetArena());
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.table_prefix_, &other->_impl_.table_prefix_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.db_credentials_sealed_, &other->_impl_.db_credentials_sealed_, arena);
+}
+
+::google::protobuf::Metadata StoreConfig::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
 class ConfigSet::_Internal {
  public:
   using HasBits =
@@ -536,6 +901,19 @@ void ConfigSet::set_allocated_propagator(::trajectory::v1::PropagatorConfig* PRO
     _impl_.payload_.propagator_ = propagator;
   }
   // @@protoc_insertion_point(field_set_allocated:trajectory.v1.ConfigSet.propagator)
+}
+void ConfigSet::set_allocated_store(::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE store) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  clear_payload();
+  if (store) {
+    ::google::protobuf::Arena* submessage_arena = store->GetArena();
+    if (message_arena != submessage_arena) {
+      store = ::google::protobuf::internal::GetOwnedMessage(message_arena, store, submessage_arena);
+    }
+    set_has_store();
+    _impl_.payload_.store_ = store;
+  }
+  // @@protoc_insertion_point(field_set_allocated:trajectory.v1.ConfigSet.store)
 }
 ConfigSet::ConfigSet(::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
 #if defined(PROTOBUF_CUSTOM_VTABLE)
@@ -575,6 +953,9 @@ ConfigSet::ConfigSet(
       break;
       case kPropagator:
         _impl_.payload_.propagator_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.payload_.propagator_);
+        break;
+      case kStore:
+        _impl_.payload_.store_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.payload_.store_);
         break;
   }
 
@@ -619,6 +1000,14 @@ void ConfigSet::clear_payload() {
         delete _impl_.payload_.propagator_;
       } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
         ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.propagator_);
+      }
+      break;
+    }
+    case kStore: {
+      if (GetArena() == nullptr) {
+        delete _impl_.payload_.store_;
+      } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+        ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.store_);
       }
       break;
     }
@@ -673,17 +1062,17 @@ ConfigSet::GetClassData() const {
   return ConfigSet_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<1, 3, 1, 39, 2>
+const ::_pbi::TcParseTable<1, 4, 2, 39, 2>
 ConfigSet::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(ConfigSet, _impl_._has_bits_),
     0, // no _extensions_
-    3, 8,  // max_field_number, fast_idx_mask
+    4, 8,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967288,  // skipmap
+    4294967280,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    3,  // num_field_entries
-    1,  // num_aux_entries
+    4,  // num_field_entries
+    2,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     ConfigSet_class_data_.base(),
     nullptr,  // post_loop_handler
@@ -709,9 +1098,12 @@ ConfigSet::_table_ = {
     {PROTOBUF_FIELD_OFFSET(ConfigSet, _impl_.config_version_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUInt64)},
     // .trajectory.v1.PropagatorConfig propagator = 3 [json_name = "propagator"];
     {PROTOBUF_FIELD_OFFSET(ConfigSet, _impl_.payload_.propagator_), _Internal::kOneofCaseOffset + 0, 0, (0 | ::_fl::kFcOneof | ::_fl::kMessage | ::_fl::kTvTable)},
+    // .trajectory.v1.StoreConfig store = 4 [json_name = "store"];
+    {PROTOBUF_FIELD_OFFSET(ConfigSet, _impl_.payload_.store_), _Internal::kOneofCaseOffset + 0, 1, (0 | ::_fl::kFcOneof | ::_fl::kMessage | ::_fl::kTvTable)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::trajectory::v1::PropagatorConfig>()},
+      {::_pbi::TcParser::GetTable<::trajectory::v1::StoreConfig>()},
   }},
   {{
     "\27\7\0\0\0\0\0\0"
@@ -774,13 +1166,22 @@ PROTOBUF_NOINLINE void ConfigSet::Clear() {
     }
   }
 
-  // .trajectory.v1.PropagatorConfig propagator = 3 [json_name = "propagator"];
-  if (this_.payload_case() == kPropagator) {
-    target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
-        3, *this_._impl_.payload_.propagator_, this_._impl_.payload_.propagator_->GetCachedSize(), target,
-        stream);
+  switch (this_.payload_case()) {
+    case kPropagator: {
+      target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
+          3, *this_._impl_.payload_.propagator_, this_._impl_.payload_.propagator_->GetCachedSize(), target,
+          stream);
+      break;
+    }
+    case kStore: {
+      target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
+          4, *this_._impl_.payload_.store_, this_._impl_.payload_.store_->GetCachedSize(), target,
+          stream);
+      break;
+    }
+    default:
+      break;
   }
-
   if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
     target =
         ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
@@ -827,6 +1228,12 @@ PROTOBUF_NOINLINE void ConfigSet::Clear() {
     case kPropagator: {
       total_size += 1 +
                     ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.payload_.propagator_);
+      break;
+    }
+    // .trajectory.v1.StoreConfig store = 4 [json_name = "store"];
+    case kStore: {
+      total_size += 1 +
+                    ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.payload_.store_);
       break;
     }
     case PAYLOAD_NOT_SET: {
@@ -886,6 +1293,14 @@ void ConfigSet::MergeImpl(::google::protobuf::MessageLite& to_msg,
           _this->_impl_.payload_.propagator_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.payload_.propagator_);
         } else {
           _this->_impl_.payload_.propagator_->MergeFrom(*from._impl_.payload_.propagator_);
+        }
+        break;
+      }
+      case kStore: {
+        if (oneof_needs_init) {
+          _this->_impl_.payload_.store_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.payload_.store_);
+        } else {
+          _this->_impl_.payload_.store_->MergeFrom(*from._impl_.payload_.store_);
         }
         break;
       }
@@ -951,6 +1366,19 @@ void ConfigApplied::set_allocated_propagator(::trajectory::v1::PropagatorConfig*
   }
   // @@protoc_insertion_point(field_set_allocated:trajectory.v1.ConfigApplied.propagator)
 }
+void ConfigApplied::set_allocated_store(::trajectory::v1::StoreConfig* PROTOBUF_NULLABLE store) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  clear_payload();
+  if (store) {
+    ::google::protobuf::Arena* submessage_arena = store->GetArena();
+    if (message_arena != submessage_arena) {
+      store = ::google::protobuf::internal::GetOwnedMessage(message_arena, store, submessage_arena);
+    }
+    set_has_store();
+    _impl_.payload_.store_ = store;
+  }
+  // @@protoc_insertion_point(field_set_allocated:trajectory.v1.ConfigApplied.store)
+}
 ConfigApplied::ConfigApplied(::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
 #if defined(PROTOBUF_CUSTOM_VTABLE)
     : ::google::protobuf::Message(arena, ConfigApplied_class_data_.base()) {
@@ -1001,6 +1429,9 @@ ConfigApplied::ConfigApplied(
       break;
       case kPropagator:
         _impl_.payload_.propagator_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.payload_.propagator_);
+        break;
+      case kStore:
+        _impl_.payload_.store_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.payload_.store_);
         break;
   }
 
@@ -1058,6 +1489,14 @@ void ConfigApplied::clear_payload() {
       }
       break;
     }
+    case kStore: {
+      if (GetArena() == nullptr) {
+        delete _impl_.payload_.store_;
+      } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+        ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.store_);
+      }
+      break;
+    }
     case PAYLOAD_NOT_SET: {
       break;
     }
@@ -1109,17 +1548,17 @@ ConfigApplied::GetClassData() const {
   return ConfigApplied_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<3, 7, 2, 56, 2>
+const ::_pbi::TcParseTable<3, 8, 3, 64, 2>
 ConfigApplied::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(ConfigApplied, _impl_._has_bits_),
     0, // no _extensions_
-    7, 56,  // max_field_number, fast_idx_mask
+    8, 56,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967168,  // skipmap
+    4294967040,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    7,  // num_field_entries
-    2,  // num_aux_entries
+    8,  // num_field_entries
+    3,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     ConfigApplied_class_data_.base(),
     nullptr,  // post_loop_handler
@@ -1171,13 +1610,16 @@ ConfigApplied::_table_ = {
     {PROTOBUF_FIELD_OFFSET(ConfigApplied, _impl_.applied_at_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
     // .trajectory.v1.PropagatorConfig propagator = 7 [json_name = "propagator"];
     {PROTOBUF_FIELD_OFFSET(ConfigApplied, _impl_.payload_.propagator_), _Internal::kOneofCaseOffset + 0, 1, (0 | ::_fl::kFcOneof | ::_fl::kMessage | ::_fl::kTvTable)},
+    // .trajectory.v1.StoreConfig store = 8 [json_name = "store"];
+    {PROTOBUF_FIELD_OFFSET(ConfigApplied, _impl_.payload_.store_), _Internal::kOneofCaseOffset + 0, 2, (0 | ::_fl::kFcOneof | ::_fl::kMessage | ::_fl::kTvTable)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::google::protobuf::Timestamp>()},
       {::_pbi::TcParser::GetTable<::trajectory::v1::PropagatorConfig>()},
+      {::_pbi::TcParser::GetTable<::trajectory::v1::StoreConfig>()},
   }},
   {{
-    "\33\7\10\0\0\5\0\0"
+    "\33\7\10\0\0\5\0\0\0\0\0\0\0\0\0\0"
     "trajectory.v1.ConfigApplied"
     "service"
     "instance"
@@ -1291,13 +1733,22 @@ PROTOBUF_NOINLINE void ConfigApplied::Clear() {
         stream);
   }
 
-  // .trajectory.v1.PropagatorConfig propagator = 7 [json_name = "propagator"];
-  if (this_.payload_case() == kPropagator) {
-    target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
-        7, *this_._impl_.payload_.propagator_, this_._impl_.payload_.propagator_->GetCachedSize(), target,
-        stream);
+  switch (this_.payload_case()) {
+    case kPropagator: {
+      target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
+          7, *this_._impl_.payload_.propagator_, this_._impl_.payload_.propagator_->GetCachedSize(), target,
+          stream);
+      break;
+    }
+    case kStore: {
+      target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
+          8, *this_._impl_.payload_.store_, this_._impl_.payload_.store_->GetCachedSize(), target,
+          stream);
+      break;
+    }
+    default:
+      break;
   }
-
   if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
     target =
         ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
@@ -1369,6 +1820,12 @@ PROTOBUF_NOINLINE void ConfigApplied::Clear() {
     case kPropagator: {
       total_size += 1 +
                     ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.payload_.propagator_);
+      break;
+    }
+    // .trajectory.v1.StoreConfig store = 8 [json_name = "store"];
+    case kStore: {
+      total_size += 1 +
+                    ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.payload_.store_);
       break;
     }
     case PAYLOAD_NOT_SET: {
@@ -1459,6 +1916,14 @@ void ConfigApplied::MergeImpl(::google::protobuf::MessageLite& to_msg,
           _this->_impl_.payload_.propagator_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.payload_.propagator_);
         } else {
           _this->_impl_.payload_.propagator_->MergeFrom(*from._impl_.payload_.propagator_);
+        }
+        break;
+      }
+      case kStore: {
+        if (oneof_needs_init) {
+          _this->_impl_.payload_.store_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.payload_.store_);
+        } else {
+          _this->_impl_.payload_.store_->MergeFrom(*from._impl_.payload_.store_);
         }
         break;
       }
