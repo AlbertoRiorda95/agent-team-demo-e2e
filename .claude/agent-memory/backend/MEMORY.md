@@ -1,4 +1,4 @@
-- [CI runner environment](project_ci-runner-env.md) — network, missing protoc/ROS2, Docker available, buf postinstall quirk
+- [CI runner environment](project_ci-runner-env.md) — network, missing protoc/ROS2, Docker, buf quirk, hook blocks "publish", PG restart port
 - [Web workspace manifest](project_web-workspace-manifest.md) — server tasks may precede the UI task; backend creates a minimal package.json + alignment entry
 - [Web server workspaces](project_web_server_workspaces.md) — *-web/server packages need devops to add them to root workspaces
 - [Web server lib in image](project_web-server-lib-in-image.md) — workspace lib import breaks the devops image at runtime; CI never runs images
