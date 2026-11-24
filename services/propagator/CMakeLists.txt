@@ -17,10 +17,18 @@ if(PROPAGATOR_CLANG_TIDY)
 endif()
 
 find_package(cnats REQUIRED CONFIG)
+find_package(protobuf REQUIRED CONFIG)
 
-add_library(propagator_core src/propagator.cpp)
+# The committed generated code of trajectory.v1 (scripts/generate-proto.sh):
+# SYSTEM includes and no clang-tidy, it is not ours to lint.
+file(GLOB TRAJECTORY_PROTO_SOURCES CONFIGURE_DEPENDS src/gen/trajectory/v1/*.pb.cc)
+add_library(trajectory_proto STATIC ${TRAJECTORY_PROTO_SOURCES})
+target_include_directories(trajectory_proto SYSTEM PUBLIC src/gen)
+target_link_libraries(trajectory_proto PUBLIC protobuf::libprotobuf)
+
+add_library(propagator_core src/propagator.cpp src/propagate.cpp)
 target_include_directories(propagator_core PUBLIC include)
-target_link_libraries(propagator_core PRIVATE cnats::nats_static)
+target_link_libraries(propagator_core PUBLIC trajectory_proto PRIVATE cnats::nats_static)
 target_compile_options(propagator_core PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
 add_executable(propagator src/main.cpp)
@@ -34,7 +42,7 @@ endif()
 include(CTest)
 if(BUILD_TESTING)
   find_package(GTest REQUIRED CONFIG)
-  add_executable(propagator_tests tests/smoke_test.cpp)
+  add_executable(propagator_tests tests/smoke_test.cpp tests/propagate_test.cpp)
   target_link_libraries(propagator_tests PRIVATE propagator_core GTest::gtest_main)
   target_compile_options(propagator_tests PRIVATE -Wall -Wextra -Wpedantic -Werror)
   include(GoogleTest)
