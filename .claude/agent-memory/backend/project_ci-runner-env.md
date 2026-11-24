@@ -20,3 +20,4 @@ Hook quirk (2026-11-24, issue #91): `scripts/hooks/block-infra-commands.sh` bloc
 Testcontainers restart of PostgreSQL (#91): Docker re-assigns a random host port on `docker start`; bind a fixed host port below 32768 (see `DatabaseOutageTest`).
 
 Hook quirk (2026-11-24, issue #88): any command whose text contains `.conan2` is blocked as "reads a credential file", even to read a cnats header in the Conan cache. Fetch the header from GitHub instead (`raw.githubusercontent.com/nats-io/nats.c/v3.14.0/src/nats.h` into /tmp). `ci/nats-test.sh up` gives a real JetStream with the streams for the propagator ctest (`NATS_TEST_URL=nats://127.0.0.1:4222`). Building the propagator's Conan deps from scratch takes ~15 min: start `conan install` in the background first.
+Conan on the runner (2026-11-24, #89): `pipx install conan==2.34.0` + `conan profile detect --force`; `nohup conan install ... &` works even with background tasks disabled (~12 min for propagator deps).

@@ -9,7 +9,9 @@
 #include <cstdlib>
 #include <thread>
 
+#include "nats_config.hpp"
 #include "nats_pipeline.hpp"
+#include "propagator/config.hpp"
 
 namespace propagator {
 
@@ -68,11 +70,14 @@ std::string_view to_string(Health health) noexcept {
 }
 
 Config config_from_env() {
-  // Read once at start-up, before any thread exists.
-  // NOLINTNEXTLINE(concurrency-mt-unsafe)
-  const char* url = std::getenv("NATS_URL");
-  return Config{(url != nullptr && *url != '\0') ? std::string{url}
-                                                 : std::string{default_nats_url}};
+  const auto variable = [](const char* name, std::string_view fallback) {
+    // Read once at start-up, before any thread exists.
+    // NOLINTNEXTLINE(concurrency-mt-unsafe)
+    const char* value = std::getenv(name);
+    return (value != nullptr && *value != '\0') ? std::string{value} : std::string{fallback};
+  };
+  return Config{.nats_url = variable("NATS_URL", default_nats_url),
+                .config_path = variable("PROPAGATOR_CONFIG_PATH", default_config_path)};
 }
 
 std::string redact_url(std::string_view url) {
@@ -188,7 +193,15 @@ std::string instance_name() {
 int run(const Config& config, const std::atomic<bool>& stop, std::ostream& log,
         const BackoffPolicy& backoff) {
   log_json(log, "info", "starting",
-           {{"version", version()}, {"nats_url", redact_url(config.nats_url)}});
+           {{"version", version()},
+            {"nats_url", redact_url(config.nats_url)},
+            {"config_path", config.config_path}});
+
+  const LoadedConfig loaded = load_config_file(config.config_path);
+  if (!loaded.problem.empty()) {
+    log_json(log, "error", "config file not used: starting with the defaults",
+             {{"error", loaded.problem}});
+  }
 
   NatsConnection nats;
   unsigned attempt = 0;
@@ -207,15 +220,18 @@ int run(const Config& config, const std::atomic<bool>& stop, std::ostream& log,
   }
 
   if (!stop.load()) {
-    // The config in force comes with the config task (#89): the defaults, v0.
-    constexpr std::uint64_t config_version = 0;
     constexpr std::chrono::milliseconds max_fetch_wait{1'000};
-    NatsPipeline pipeline(nats.native(), log, instance_name());
+    const std::string instance = instance_name();
+    NatsConfig propagation_config(nats.native(), log, instance, config.config_path, loaded);
+    NatsPipeline pipeline(nats.native(), log, instance);
     auto next_heartbeat = std::chrono::steady_clock::now();
     while (!stop.load()) {
+      // PERF: a config set waits for the launch fetch in progress (<= 1 s).
+      propagation_config.poll();
       const auto now = std::chrono::steady_clock::now();
       if (now >= next_heartbeat) {
-        pipeline.heartbeat(nats.health(), config_version);
+        pipeline.heartbeat(nats.health(), propagation_config.version(),
+                           propagation_config.problem());
         next_heartbeat += heartbeat_interval;
         if (next_heartbeat <= now) {
           next_heartbeat = now + heartbeat_interval;  // fell behind: no burst
