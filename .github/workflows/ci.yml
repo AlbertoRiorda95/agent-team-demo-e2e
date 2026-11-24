@@ -56,7 +56,7 @@ jobs:
           common='^(\.github/workflows/ci\.yml|ci/)'
           out proto      buf.yaml                                "$common|^proto/|^buf\.(yaml|gen\.yaml|lock)$"
           out api        services/api/pyproject.toml             "$common|^proto/|^services/api/"
-          out propagator services/propagator/CMakeLists.txt      "$common|^proto/|^services/propagator/"
+          out propagator services/propagator/CMakeLists.txt      "$common|^proto/|^services/propagator/|^compose\.yml$|^deploy/nats/|^\.env\.example$"
           out ros2       services/ros2-publisher/package.xml     "$common|^proto/|^services/ros2-publisher/"
           out store      services/store/gradlew                  "$common|^proto/|^services/store/"
           out web        package-lock.json                       "$common|^proto/|^(package(-lock)?\.json|services/(viz|control)-web/|libs/|packages/|docs/api/)"
@@ -128,7 +128,18 @@ jobs:
       - run: conan install . --build=missing -s compiler.cppstd=20
       - run: cmake --preset release
       - run: cmake --build --preset release
+      # NATS with JetStream and the streams of proto/nats/streams/ (compose.yml
+      # services nats + nats-init) for the integration tests
+      - name: Start NATS for the integration tests
+        working-directory: .
+        run: ./ci/nats-test.sh up
       - run: ctest --preset release --output-on-failure
+        env:
+          NATS_TEST_URL: nats://127.0.0.1:4222
+      - name: Stop NATS
+        if: always()
+        working-directory: .
+        run: ./ci/nats-test.sh down
 
   ros2-publisher:
     needs: changes
