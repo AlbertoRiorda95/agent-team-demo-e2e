@@ -19,10 +19,11 @@ const accepted = fromBinary(LaunchAcceptedSchema, bytes);
 statusSubject('store'); // 'status.store'
 ```
 
-Version 0.1.0 exports:
+Version 0.2.0 exports:
 - the protobuf-es messages of `trajectory.v1` (`LaunchAccepted`,
   `TrajectoryComputed`, `TrajectoryStored`, `PipelineError`, `ServiceStatus`,
-  `ConfigSet`, `ConfigApplied` and their parts), each with its `*Schema`;
+  `ConfigSet`, `ConfigApplied` and their parts, with the config
+  payloads `PropagatorConfig` and, since 0.2.0, `StoreConfig`), each with its `*Schema`;
 - the NATS subjects of `proto/README.md` (`src/subjects.ts`):
   `LAUNCHES_ACCEPTED`, `TRAJECTORIES_COMPUTED`, `TRAJECTORIES_STORED`,
   `PIPELINE_ERRORS`, and `statusSubject(service)`, `configSetSubject(service)`,
