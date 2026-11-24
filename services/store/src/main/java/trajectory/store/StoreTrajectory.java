@@ -30,18 +30,18 @@ public final class StoreTrajectory {
   public record Retry(String launchId, String reason) implements Outcome {}
 
   private final TrajectoryRepository repository;
-  private final Supplier<TablePrefix> prefixInForce;
+  private final Supplier<ConfigInForce> configInForce;
 
   /**
    * Creates the use case.
    *
    * @param repository where the trajectories go
-   * @param prefixInForce the table prefix in force, read once per message (a config change while
-   *     a trajectory is being written does not affect it)
+   * @param configInForce the config in force (table prefix and credentials), read once per
+   *     message (a config change while a trajectory is being written does not affect it)
    */
-  public StoreTrajectory(TrajectoryRepository repository, Supplier<TablePrefix> prefixInForce) {
+  public StoreTrajectory(TrajectoryRepository repository, Supplier<ConfigInForce> configInForce) {
     this.repository = repository;
-    this.prefixInForce = prefixInForce;
+    this.configInForce = configInForce;
   }
 
   /**
@@ -61,9 +61,10 @@ public final class StoreTrajectory {
     if (problem.isPresent()) {
       return new Rejected(t.getLaunchId(), problem.get());
     }
-    TablePrefix prefix = prefixInForce.get();
+    ConfigInForce config = configInForce.get();
     try {
-      TrajectoryRepository.Saved saved = repository.save(t, prefix);
+      TrajectoryRepository.Saved saved =
+          repository.save(t, config.prefix(), config.credentials());
       return new Stored(t.getLaunchId(), saved.sampleCount(), saved.storedAt(), saved.duplicate());
     } catch (TrajectoryRepository.UnavailableException e) {
       return new Retry(t.getLaunchId(), e.getMessage());

@@ -18,18 +18,19 @@ import trajectory.v1.Trajectory.TrajectoryComputed;
  * The PostgreSQL adapter of {@link TrajectoryRepository}: one transaction per trajectory, the
  * launch row with {@code INSERT ... ON CONFLICT DO NOTHING} (idempotent on launch_id, also between
  * replicas), the samples with COPY. One connection, opened on first use and reopened after a
- * failure; used by one thread (the consumer).
+ * failure or when the credentials in force change; used by one thread (the consumer).
  */
 public final class PostgresTrajectoryRepository implements TrajectoryRepository {
-  /** Opens a connection with the credentials in force. */
+  /** Opens a connection as a database user. */
   @FunctionalInterface
   public interface ConnectionFactory {
-    /** A new connection. */
-    Connection open() throws SQLException;
+    /** A new connection with {@code credentials}. */
+    Connection open(DbCredentials credentials) throws SQLException;
   }
 
   private final ConnectionFactory factory;
   private Connection conn;
+  private DbCredentials connCredentials;
 
   /**
    * Creates the adapter; nothing is opened before the first {@link #save}.
@@ -41,10 +42,10 @@ public final class PostgresTrajectoryRepository implements TrajectoryRepository 
   }
 
   @Override
-  public Saved save(TrajectoryComputed t, TablePrefix prefix)
+  public Saved save(TrajectoryComputed t, TablePrefix prefix, DbCredentials credentials)
       throws UnavailableException, RejectedException {
     try {
-      Connection c = connection();
+      Connection c = connection(credentials);
       try {
         Saved saved = insert(c, t, prefix);
         c.commit();
@@ -149,11 +150,15 @@ public final class PostgresTrajectoryRepository implements TrajectoryRepository 
     return state != null && (state.startsWith("22") || state.startsWith("23"));
   }
 
-  private Connection connection() throws SQLException {
+  private Connection connection(DbCredentials credentials) throws SQLException {
+    if (conn != null && !credentials.equals(connCredentials)) {
+      close(); // new credentials in force: the next writes go through the new user
+    }
     if (conn == null || conn.isClosed()) {
-      Connection c = factory.open();
+      Connection c = factory.open(credentials);
       c.setAutoCommit(false);
       conn = c;
+      connCredentials = credentials;
     }
     return conn;
   }
@@ -170,6 +175,7 @@ public final class PostgresTrajectoryRepository implements TrajectoryRepository 
   public void close() {
     Connection c = conn;
     conn = null;
+    connCredentials = null;
     if (c != null) {
       try {
         c.close();

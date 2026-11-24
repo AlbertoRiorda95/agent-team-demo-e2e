@@ -2,6 +2,8 @@ package trajectory.store;
 
 import io.nats.client.Connection;
 import io.nats.client.Nats;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import io.nats.client.api.StreamConfiguration;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,13 +59,25 @@ final class TestInfra {
     return config(pg, pg.getFirstMappedPort(), natsUrl(nats));
   }
 
+  /**
+   * The environment of compose: the container's database and NATS, a random {@code
+   * STORE_CONFIG_KEY} and a {@code STORE_CONFIG_PATH} in a new temporary folder (no file yet).
+   */
   static StoreConfig config(PostgreSQLContainer pg, int pgPort, String natsUrl) {
+    Path configPath;
+    try {
+      configPath = Files.createTempDirectory("store-config").resolve("config.json");
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
     return StoreConfig.fromEnvironment(
         Map.of(
             "DATABASE_URL",
             "postgresql://" + pg.getHost() + ":" + pgPort + "/" + pg.getDatabaseName(),
             "DATABASE_USER", pg.getUsername(),
             "DATABASE_PASSWORD", pg.getPassword(),
-            "NATS_URL", natsUrl));
+            "NATS_URL", natsUrl,
+            "STORE_CONFIG_PATH", configPath.toString(),
+            "STORE_CONFIG_KEY", CredentialSealingTest.randomKey()));
   }
 }

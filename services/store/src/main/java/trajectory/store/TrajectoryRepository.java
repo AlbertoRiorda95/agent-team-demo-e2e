@@ -35,15 +35,16 @@ public interface TrajectoryRepository {
   }
 
   /**
-   * Inserts the launch and its samples in the tables of {@code prefix}, or nothing when the
-   * launch is already there.
+   * Inserts the launch and its samples in the tables of {@code prefix}, as {@code credentials},
+   * or nothing when the launch is already there.
    *
    * @param trajectory a validated trajectory ({@link TrajectoryValidation})
    * @param prefix the tables to write to
+   * @param credentials the database user that writes
    * @return what is stored for the launch
    * @throws UnavailableException rolled back, to retry
    * @throws RejectedException rolled back, not to retry
    */
-  Saved save(TrajectoryComputed trajectory, TablePrefix prefix)
+  Saved save(TrajectoryComputed trajectory, TablePrefix prefix, DbCredentials credentials)
       throws UnavailableException, RejectedException;
 }

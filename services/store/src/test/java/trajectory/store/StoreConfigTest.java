@@ -72,6 +72,28 @@ class StoreConfigTest {
   }
 
   @Test
+  void configPathAndKeyAreOptional() {
+    StoreConfig none = StoreConfig.fromEnvironment(env());
+    assertEquals(LocalConfigFile.DEFAULT_PATH, none.configPath());
+    assertTrue(none.sealing().isEmpty());
+    assertEquals("STORE_CONFIG_KEY is not set", none.configKeyProblem());
+
+    Map<String, String> env = env();
+    String key = CredentialSealingTest.randomKey();
+    env.put("STORE_CONFIG_PATH", "/tmp/store/config.json");
+    env.put("STORE_CONFIG_KEY", key);
+    StoreConfig set = StoreConfig.fromEnvironment(env);
+    assertEquals(java.nio.file.Path.of("/tmp/store/config.json"), set.configPath());
+    assertTrue(set.sealing().isPresent());
+    assertFalse(set.toString().contains(key), "the key is not printed");
+
+    env.put("STORE_CONFIG_KEY", "dG9vIHNob3J0");
+    StoreConfig invalid = StoreConfig.fromEnvironment(env);
+    assertTrue(invalid.sealing().isEmpty(), "an invalid key is not fatal: degraded");
+    assertEquals("STORE_CONFIG_KEY is not 32 bytes", invalid.configKeyProblem());
+  }
+
+  @Test
   void passwordAndNatsCredentialsAreNotPrinted() {
     Map<String, String> env = env();
     env.put("NATS_URL", "nats://user:token@nats:4222");
