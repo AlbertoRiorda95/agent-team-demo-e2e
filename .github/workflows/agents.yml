@@ -115,7 +115,7 @@ jobs:
       # The session runs as the role's agent (--agent): its tools, and the role's hooks
       # (scripts/hooks/role-hooks.sh), which apply only to a named agent.
       - if: needs.route.outputs.mode == 'task'
-        uses: anthropics/claude-code-action@cc98b3ae241b0fcfb6a42a2690751afffecb4452  # v1.0.278
+        uses: anthropics/claude-code-action@eb56b6666facdbd501035f4a0269d8caee2e7a8b  # v1.0.289
         id: task
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -161,7 +161,7 @@ jobs:
       # /agent <request>: the same agent works on its pull request's branch (or,
       # before there is one, on the issue), as asked in the comment.
       - if: needs.route.outputs.mode == 'iterate'
-        uses: anthropics/claude-code-action@cc98b3ae241b0fcfb6a42a2690751afffecb4452  # v1.0.278
+        uses: anthropics/claude-code-action@eb56b6666facdbd501035f4a0269d8caee2e7a8b  # v1.0.289
         id: iterate
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
