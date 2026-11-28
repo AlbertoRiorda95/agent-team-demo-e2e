@@ -1,6 +1,7 @@
 // Entry point of the viz-web server: `npm start` (node runs the TypeScript
 // directly, Node 24 type stripping). Logs are structured JSON (pino).
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { NatsBus } from './adapters/nats-bus.ts';
 import { loadConfig } from './config.ts';
 import { createServer } from './server.ts';
@@ -13,6 +14,8 @@ const { version } = JSON.parse(
 const server = createServer({
   logger: { level: process.env.LOG_LEVEL ?? 'info' },
   version,
+  // the UI built by `npm run build -w services/viz-web`
+  uiDir: fileURLToPath(new URL('../../dist/', import.meta.url)),
   createBus: (logger) =>
     config.natsUrl === undefined ? undefined : new NatsBus({ url: config.natsUrl, logger }),
 });

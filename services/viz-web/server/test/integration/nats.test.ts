@@ -4,7 +4,6 @@
 // the reconnection, the PipelineError publication and the heartbeat.
 import { execFile } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
-import { createServer as createNetServer } from 'node:net';
 import { promisify } from 'node:util';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { GenericContainer, Wait, type StartedTestContainer } from 'testcontainers';
@@ -25,42 +24,13 @@ import {
 import { NatsBus } from '../../src/adapters/nats-bus.ts';
 import { createServer, type Server } from '../../src/server.ts';
 import { encode, launchAccepted } from '../fakes.ts';
+import { freePort, waitFor } from './helpers.ts';
 
 const STREAMS_DIR = new URL('../../../../../proto/nats/streams/', import.meta.url);
 const run = promisify(execFile);
 
 interface Entry {
   launch_id: string;
-}
-
-async function freePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const probe = createNetServer();
-    probe.once('error', reject);
-    probe.listen(0, '127.0.0.1', () => {
-      const address = probe.address();
-      probe.close(() => resolve(typeof address === 'object' && address ? address.port : 0));
-    });
-  });
-}
-
-async function waitFor<T>(
-  check: () => Promise<T | undefined> | T | undefined,
-  timeoutMs: number,
-  what: string,
-): Promise<T> {
-  const deadline = Date.now() + timeoutMs;
-  let last: unknown;
-  while (Date.now() < deadline) {
-    try {
-      const value = await check();
-      if (value !== undefined) return value;
-    } catch (error) {
-      last = error;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
-  throw new Error(`timed out after ${timeoutMs} ms waiting for ${what}${last ? `: ${String(last)}` : ''}`);
 }
 
 describe('viz-web server on a real NATS', () => {

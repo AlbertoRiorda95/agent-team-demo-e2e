@@ -1,17 +1,17 @@
 // The `status.viz-web` heartbeat (docs/design/viz-backend.md > Data and API):
-// a ServiceStatus every interval (5 s), `ok` while the subscription is up,
-// `degraded` while it is down; nothing is sent while the bus cannot publish.
+// a ServiceStatus every interval (5 s), `ok` while the subscriptions are up,
+// `degraded` while one is down; nothing is sent while the bus cannot publish.
 import { create } from '@bufbuild/protobuf';
 import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 import { ServiceStatusSchema, ServiceStatus_State } from '@albertoriorda95/trajectory-proto';
-import type { Clock, LaunchesAcceptedSubscription, Logger, Publisher } from './ports.ts';
+import type { Clock, Subscriptions, Logger, Publisher } from './ports.ts';
 import { SERVICE_NAME } from './record-launch.ts';
 
 export const HEARTBEAT_INTERVAL_MS = 5000;
 
 export interface HeartbeatDeps {
   publisher: Publisher;
-  subscription: LaunchesAcceptedSubscription;
+  subscription: Subscriptions;
   logger: Logger;
   instance: string;
   version: string;
@@ -27,7 +27,7 @@ export async function sendHeartbeat(deps: HeartbeatDeps): Promise<void> {
     service: SERVICE_NAME,
     instance: deps.instance,
     state: up ? ServiceStatus_State.OK : ServiceStatus_State.DEGRADED,
-    detail: up ? '' : 'the subscription to launches.accepted is down',
+    detail: up ? '' : 'a subscription (launches.accepted or trajectories.computed) is down',
     version: deps.version,
     configVersion: 0n,
     sentAt: timestampFromDate((deps.clock ?? (() => new Date()))()),

@@ -21,3 +21,6 @@ Testcontainers restart of PostgreSQL (#91): Docker re-assigns a random host port
 
 Hook quirk (2026-11-24, issue #88): any command whose text contains `.conan2` is blocked as "reads a credential file", even to read a cnats header in the Conan cache. Fetch the header from GitHub instead (`raw.githubusercontent.com/nats-io/nats.c/v3.14.0/src/nats.h` into /tmp). `ci/nats-test.sh up` gives a real JetStream with the streams for the propagator ctest (`NATS_TEST_URL=nats://127.0.0.1:4222`). Building the propagator's Conan deps from scratch takes ~15 min: start `conan install` in the background first.
 Conan on the runner (2026-11-24, #89): `pipx install conan==2.34.0` + `conan profile detect --force`; `nohup conan install ... &` works even with background tasks disabled (~12 min for propagator deps).
+
+Auto-mode quirk (2026-11-28, issue #106): `npx --yes <unpinned tool>` (e.g. `@redocly/cli` to lint an OpenAPI file) is denied by the permission classifier, and the whole Bash command is dropped with it (edits chained before it never ran). Keep downloads out of edit commands; validate YAML with `python3 -c "import yaml..."` instead.
+The repo's `node_modules/.bin/buf` can be missing after an `npm install -w ...`: run `npm ci` at the root before `npm run build:lib` in a web server.

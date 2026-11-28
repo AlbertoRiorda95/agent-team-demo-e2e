@@ -1,16 +1,98 @@
 openapi: 3.1.0
 info:
   title: viz-web server API
-  version: 0.1.0
+  version: 0.2.0
   description: >
-    The API between the viz-web UI and its Node server. M1 skeleton
-    (docs/design/viz-backend.md): the health check and the in-memory record of
-    the launches accepted on NATS (`launches.accepted`). The live view (SSE)
-    and the history routes come with M3 (docs/design/viewer.md).
+    The API between the viz-web UI and its Node server
+    (docs/design/viz-backend.md, docs/design/viewer.md): the health check, the
+    in-memory record of the launches accepted on NATS (`launches.accepted`),
+    the live stream of the computed trajectories (SSE) and the built UI at
+    `/`, all from one origin (no CORS). The history routes come with the next
+    M3 task.
 servers:
   - url: http://localhost:3001
     description: Local development (VIZ_WEB_SERVER_PORT)
 paths:
+  /:
+    get:
+      operationId: ui
+      summary: The built viewer UI
+      description: >
+        The UI built by `npm run build -w services/viz-web`
+        (`services/viz-web/dist`): `index.html` at `/` and its assets under
+        their own paths. 404 when the UI is not built (the API still works),
+        and for any file that is not in the build.
+      responses:
+        '200':
+          description: The page or the asset.
+          content:
+            text/html: {}
+        '404':
+          description: Not built, or no such file.
+  /api/live:
+    get:
+      operationId: liveStream
+      summary: The live stream of the computed trajectories (Server-Sent Events)
+      description: |
+        A `text/event-stream` that stays open. Events, in this order on connect:
+        1. `bus`: the NATS state, data `{"nats": "connected"}` or
+           `{"nats": "disconnected"}` (schema `BusState`). Sent again to every
+           client each time the state changes.
+        2. `trajectory`: the latest computed trajectory, if the server has one
+           and the client's `Last-Event-ID` does not name it. `id` = its
+           launch_id; data = a `trajectory.v1.TrajectoryComputed`
+           (proto/trajectory/v1/trajectory.proto) in proto3 JSON with the proto
+           field names (snake_case), enums as names and every field present
+           (`toJson` of `@bufbuild/protobuf` with `useProtoFieldName` and
+           `alwaysEmitImplicit`), on one line. Decode it with `fromJson` and
+           `TrajectoryComputedSchema` of `@albertoriorda95/trajectory-proto`;
+           the proto message is the reference for its fields, they are not
+           duplicated here. About 15 MB at the contract's cap of 100000
+           samples.
+
+        Then every new trajectory computed (`trajectories.computed`) is sent to
+        every client as a `trajectory` event; the same trajectory delivered
+        twice is sent once. A message that does not decode or has no valid
+        launch_id is never sent. "Latest" survives a server restart: the
+        server reads the last message of `trajectories.computed` at start-up.
+
+        A comment line (`: keep-alive`) is sent every 15 s. A client that does
+        not read fast enough is closed when its pending bytes pass 32 MiB; the
+        browser's `EventSource` reconnects with `Last-Event-ID`.
+      parameters:
+        - name: Last-Event-ID
+          in: header
+          required: false
+          description: >
+            The `id` of the last event the client received (a launch_id), sent
+            by `EventSource` when it reconnects. Equal to the latest launch_id:
+            the trajectory is not sent again.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The stream.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache, no-transform
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              example: |
+                event: bus
+                data: {"nats":"connected"}
+
+                event: trajectory
+                id: 6f1c2a52-8a43-4d61-9a0e-5b1d1b8f6c21
+                data: {"launch_id":"6f1c2a52-8a43-4d61-9a0e-5b1d1b8f6c21","accepted_at":"2026-11-28T10:00:00.123Z",...}
+
+                : keep-alive
+
+        '503':
+          description: The server is shutting down.
   /api/accepted-launches:
     get:
       operationId: listAcceptedLaunches
@@ -49,8 +131,9 @@ paths:
       operationId: health
       summary: Liveness for the probes
       description: >
-        Plain liveness: `degraded` (503) while the NATS subscription to
-        `launches.accepted` is down, `ok` (200) otherwise. It does not wait for
+        Plain liveness: `degraded` (503) while a NATS subscription
+        (`launches.accepted` or `trajectories.computed`) is down, `ok` (200)
+        otherwise. It does not wait for
         the start-up replay of the record.
       responses:
         '200':
@@ -71,6 +154,15 @@ paths:
                 status: degraded
 components:
   schemas:
+    BusState:
+      type: object
+      description: The data of the `bus` event of `GET /api/live`.
+      required: [nats]
+      additionalProperties: false
+      properties:
+        nats:
+          type: string
+          enum: [connected, disconnected]
     Health:
       type: object
       required: [status]
