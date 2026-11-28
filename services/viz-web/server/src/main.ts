@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { NatsBus } from './adapters/nats-bus.ts';
+import { PgHistory } from './adapters/pg-history.ts';
 import { loadConfig } from './config.ts';
 import { createServer } from './server.ts';
 
@@ -18,6 +19,8 @@ const server = createServer({
   uiDir: fileURLToPath(new URL('../../dist/', import.meta.url)),
   createBus: (logger) =>
     config.natsUrl === undefined ? undefined : new NatsBus({ url: config.natsUrl, logger }),
+  createHistory: (logger) =>
+    config.database === undefined ? undefined : new PgHistory({ database: config.database, logger }),
 });
 const { app } = server;
 

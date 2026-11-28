@@ -12,11 +12,12 @@ import {
   type LaunchAccepted,
 } from '@albertoriorda95/trajectory-proto';
 import type { AcceptedLaunch, AcceptedLaunches } from '../domain/accepted-launches.ts';
+import { UUID } from '../domain/uuid.ts';
 import type { Clock, Logger, MessageHandler, Publisher } from './ports.ts';
 
 export const SERVICE_NAME = 'viz-web';
 
-export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export { UUID } from '../domain/uuid.ts';
 
 export interface RecordLaunchDeps {
   record: AcceptedLaunches;

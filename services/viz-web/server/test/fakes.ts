@@ -1,23 +1,28 @@
 // Test doubles of the bus port (src/application/ports.ts) and helpers that
 // build the messages of launches.accepted and trajectories.computed.
 import { create, toBinary } from '@bufbuild/protobuf';
-import { timestampFromDate } from '@bufbuild/protobuf/wkt';
+import { timestampFromDate, type Timestamp } from '@bufbuild/protobuf/wkt';
 import {
+  ConfigAppliedSchema,
   LaunchAcceptedSchema,
   Sample_Phase,
   TrajectoryComputedSchema,
   TrajectoryComputed_EndReason,
+  type ConfigApplied,
   type LaunchAccepted,
   type TrajectoryComputed,
   type PipelineError,
   type ServiceStatus,
 } from '@albertoriorda95/trajectory-proto';
-import type {
-  Bus,
-  ConnectionListener,
-  Logger,
-  MessageHandlers,
+import {
+  HistoryUnavailable,
+  type Bus,
+  type ConnectionListener,
+  type HistoryRepository,
+  type Logger,
+  type MessageHandlers,
 } from '../src/application/ports.ts';
+import type { HistoryCursor, LaunchSummary } from '../src/domain/history.ts';
 
 export class FakeBus implements Bus {
   handlers: MessageHandlers | undefined;
@@ -67,6 +72,12 @@ export class FakeBus implements Bus {
   async deliverTrajectory(data: Uint8Array): Promise<void> {
     if (this.handlers === undefined) throw new Error('the subscriptions are not started');
     await this.handlers.trajectoriesComputed(data);
+  }
+
+  /** Delivers one message of config.store.applied as the subscription would. */
+  async deliverConfigApplied(data: Uint8Array): Promise<void> {
+    if (this.handlers === undefined) throw new Error('the subscriptions are not started');
+    await this.handlers.storeConfigApplied(data);
   }
 
   /** The connection drops (false) or comes back (true). */
@@ -140,4 +151,77 @@ export function trajectoryComputed(
 
 export function encodeTrajectory(message: TrajectoryComputed): Uint8Array {
   return toBinary(TrajectoryComputedSchema, message);
+}
+
+/** A store ConfigApplied with the table prefix in force. */
+export function storeConfigApplied(tablePrefix: string, overrides: Partial<ConfigApplied> = {}): Uint8Array {
+  const message = create(ConfigAppliedSchema, {
+    service: 'store',
+    instance: 'store-0',
+    configVersion: 3n,
+    ok: true,
+    appliedAt: timestampFromDate(new Date(Date.UTC(2026, 10, 28, 9, 0, 0))),
+    payload: { case: 'store', value: { tablePrefix } },
+  });
+  return toBinary(ConfigAppliedSchema, Object.assign(message, overrides));
+}
+
+function compareTimestamps(a: Timestamp, b: Timestamp): number {
+  if (a.seconds !== b.seconds) return a.seconds < b.seconds ? -1 : 1;
+  return a.nanos - b.nanos;
+}
+
+/** Newest first by (received_at, id), as the SQL of the PostgreSQL adapter. */
+function newestFirst(a: { receivedAt: Timestamp; launchId: string }, b: { receivedAt: Timestamp; launchId: string }) {
+  return compareTimestamps(b.receivedAt, a.receivedAt) || (a.launchId < b.launchId ? 1 : a.launchId > b.launchId ? -1 : 0);
+}
+
+/** An in-memory history: the stored trajectories per table prefix. */
+export class FakeHistory implements HistoryRepository {
+  readonly tables = new Map<string, TrajectoryComputed[]>();
+  /** The prefixes the reads were made with, in order. */
+  readonly prefixes: string[] = [];
+  unavailable = false;
+  closed = false;
+
+  store(prefix: string, trajectory: TrajectoryComputed): void {
+    const rows = this.tables.get(prefix) ?? [];
+    rows.push(trajectory);
+    this.tables.set(prefix, rows);
+  }
+
+  async listLaunches(prefix: string, after: HistoryCursor | undefined, limit: number): Promise<LaunchSummary[]> {
+    this.#read(prefix);
+    const rows = (this.tables.get(prefix) ?? []).map(toSummary).sort(newestFirst);
+    const start = after === undefined ? 0 : rows.findIndex((row) => newestFirst(row, after) > 0);
+    return start < 0 ? [] : rows.slice(start, start + limit);
+  }
+
+  async findTrajectory(prefix: string, launchId: string): Promise<TrajectoryComputed | undefined> {
+    this.#read(prefix);
+    return (this.tables.get(prefix) ?? []).find((t) => t.launchId === launchId);
+  }
+
+  async close(): Promise<void> {
+    this.closed = true;
+  }
+
+  #read(prefix: string): void {
+    this.prefixes.push(prefix);
+    if (this.unavailable) throw new HistoryUnavailable('database unavailable: connection refused');
+  }
+}
+
+function toSummary(t: TrajectoryComputed): LaunchSummary {
+  return {
+    launchId: t.launchId,
+    receivedAt: t.acceptedAt!,
+    computedAt: t.computedAt!,
+    request: t.request!,
+    endReason: t.endReason,
+    flightTimeS: t.flightTimeS,
+    maxHeightM: t.maxHeightM,
+    rangeM: t.rangeM,
+    sampleCount: t.samples.length,
+  };
 }
