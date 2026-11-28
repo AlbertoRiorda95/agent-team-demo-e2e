@@ -1,14 +1,15 @@
 openapi: 3.1.0
 info:
   title: viz-web server API
-  version: 0.2.0
+  version: 0.3.0
   description: >
     The API between the viz-web UI and its Node server
     (docs/design/viz-backend.md, docs/design/viewer.md): the health check, the
     in-memory record of the launches accepted on NATS (`launches.accepted`),
-    the live stream of the computed trajectories (SSE) and the built UI at
-    `/`, all from one origin (no CORS). The history routes come with the next
-    M3 task.
+    the live stream of the computed trajectories (SSE), the stored history
+    (read only, PostgreSQL) and the built UI at `/`, all from one origin (no
+    CORS). Errors of the history routes are `application/problem+json`
+    (RFC 9457, as in docs/api/openapi.yaml).
 servers:
   - url: http://localhost:3001
     description: Local development (VIZ_WEB_SERVER_PORT)
@@ -93,6 +94,130 @@ paths:
 
         '503':
           description: The server is shutting down.
+  /api/launches:
+    get:
+      operationId: listLaunches
+      summary: The stored launches, newest first, in keyset pages
+      description: >
+        The launches store recorded in the tables of the table prefix in force
+        (`<prefix>launches`; the prefix is the `store.table_prefix` of the
+        latest `config.store.applied`, empty until one arrives), newest first
+        by (`received_at`, `id`). Keyset pagination: pass the `next_cursor` of
+        a page as `cursor` to get the next one; pages stay stable while new
+        launches arrive. Each request reads the prefix in force at that
+        moment: after a new `config.store.applied` the next request reads the
+        new tables. Only computed trajectories are stored: accepted or failed
+        launches are not listed.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: The page size.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: cursor
+          in: query
+          required: false
+          description: The `next_cursor` of the previous page; opaque, absent for the first page.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: One page; `items` is empty when nothing is stored.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LaunchPage'
+              example:
+                items:
+                  - launch_id: 6f1c2a52-8a43-4d61-9a0e-5b1d1b8f6c21
+                    received_at: '2026-11-28T10:00:00.123456Z'
+                    computed_at: '2026-11-28T10:00:00.180Z'
+                    request:
+                      mass_kg: 1
+                      position: { x_m: 0, y_m: 0, z_m: 0 }
+                      azimuth_deg: 45
+                      elevation_deg: 60
+                      force_n: 100
+                      burn_duration_s: 0.5
+                    end_reason: END_REASON_GROUND
+                    flight_time_s: 8.83
+                    max_height_m: 95.4
+                    range_m: 220.1
+                    sample_count: 884
+                next_cursor: eyJyIjoiMjAyNi0xMS0yOFQxMDowMDowMC4xMjM0NTZaIiwiaSI6IjZmMWMyYTUyIn0
+        '400':
+          description: '`limit` is not an integer in [1, 200], or `cursor` is not a cursor of this API.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                type: about:blank
+                title: Invalid request
+                status: 400
+                detail: limit must be an integer between 1 and 200
+        '503':
+          $ref: '#/components/responses/HistoryUnavailable'
+  /api/launches/{id}/trajectory:
+    get:
+      operationId: getLaunchTrajectory
+      summary: One stored trajectory, the same shape as the live event
+      description: >
+        The stored launch `id` of the prefix in force with its samples in
+        `seq` order, as a `trajectory.v1.TrajectoryComputed`
+        (proto/trajectory/v1/trajectory.proto) in proto3 JSON with the proto
+        field names, enums as names and every field present: the same
+        encoding as the `trajectory` event of `GET /api/live`, decoded with
+        `fromJson` and `TrajectoryComputedSchema` of
+        `@albertoriorda95/trajectory-proto`. `accepted_at` is the stored
+        `received_at` and `config` the stored snapshot; the timestamps keep
+        their microseconds. About 15 MB at the contract's cap of 100000
+        samples.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The launch_id (a UUID, any case).
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: The trajectory.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: A `trajectory.v1.TrajectoryComputed` in proto3 JSON (see the description).
+                additionalProperties: true
+        '400':
+          description: '`id` is not a UUID.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                type: about:blank
+                title: Invalid request
+                status: 400
+                detail: id must be a UUID
+        '404':
+          description: No stored launch has this id (in the tables of the prefix in force).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                type: about:blank
+                title: Launch not found
+                status: 404
+                detail: No stored launch has the id 6f1c2a52-8a43-4d61-9a0e-5b1d1b8f6c21.
+        '503':
+          $ref: '#/components/responses/HistoryUnavailable'
   /api/accepted-launches:
     get:
       operationId: listAcceptedLaunches
@@ -132,9 +257,10 @@ paths:
       summary: Liveness for the probes
       description: >
         Plain liveness: `degraded` (503) while a NATS subscription
-        (`launches.accepted` or `trajectories.computed`) is down, `ok` (200)
-        otherwise. It does not wait for
-        the start-up replay of the record.
+        (`launches.accepted`, `trajectories.computed` or
+        `config.store.applied`) is down, `ok` (200) otherwise. PostgreSQL is
+        not checked: while it is down only the history routes answer 503. It
+        does not wait for the start-up replay of the record.
       responses:
         '200':
           description: The server is up and every dependency it checks is reachable.
@@ -153,7 +279,78 @@ paths:
               example:
                 status: degraded
 components:
+  responses:
+    HistoryUnavailable:
+      description: PostgreSQL is unreachable or not configured (DATABASE_URL unset); retry later.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: History unavailable
+            status: 503
+            detail: The database is not reachable; retry later.
   schemas:
+    Problem:
+      type: object
+      description: RFC 9457 problem details (as in docs/api/openapi.yaml).
+      required: [type, title, status, detail]
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+    LaunchPage:
+      type: object
+      required: [items, next_cursor]
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/LaunchSummary'
+        next_cursor:
+          type: [string, 'null']
+          description: The `cursor` of the next page; null on the last page.
+    LaunchSummary:
+      type: object
+      description: One stored launch (a row of `<prefix>launches`).
+      required:
+        [launch_id, received_at, computed_at, request, end_reason, flight_time_s, max_height_m, range_m, sample_count]
+      additionalProperties: false
+      properties:
+        launch_id:
+          type: string
+          format: uuid
+        received_at:
+          type: string
+          format: date-time
+          description: When the api accepted the launch (RFC 3339, UTC, up to microseconds).
+        computed_at:
+          type: string
+          format: date-time
+          description: When the propagator finished (RFC 3339, UTC, up to microseconds).
+        request:
+          $ref: '#/components/schemas/LaunchRequest'
+        end_reason:
+          type: string
+          enum: [END_REASON_GROUND, END_REASON_TIME_LIMIT]
+        flight_time_s:
+          type: number
+        max_height_m:
+          type: number
+        range_m:
+          type: number
+        sample_count:
+          type: integer
+          minimum: 1
     BusState:
       type: object
       description: The data of the `bus` event of `GET /api/live`.
