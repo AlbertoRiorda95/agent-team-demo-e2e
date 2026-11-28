@@ -2,9 +2,16 @@
 *
 !package.json
 !package-lock.json
+!tsconfig.base.json
 !services/viz-web/package.json
+!services/viz-web/index.html
+!services/viz-web/vite.config.ts
+!services/viz-web/tsconfig.json
+!services/viz-web/src/
 !services/viz-web/server/package.json
 !services/viz-web/server/src/
 !services/control-web/package.json
 !libs/trajectory-proto/package.json
-!packages/ui-tokens/package.json
+!libs/trajectory-proto/tsconfig.build.json
+!libs/trajectory-proto/src/
+!packages/ui-tokens/
