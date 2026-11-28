@@ -77,7 +77,7 @@ jobs:
         env:
           REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
           GITHUB_TOKEN: ${{ github.token }}
-      - uses: anthropics/claude-code-action@cc98b3ae241b0fcfb6a42a2690751afffecb4452  # v1.0.278
+      - uses: anthropics/claude-code-action@eb56b6666facdbd501035f4a0269d8caee2e7a8b  # v1.0.289
         id: claude
         env:
           # In CI everything runs in the foreground: background subagents or commands are lost when the run ends.
