@@ -211,6 +211,102 @@ test('History: a new live trajectory does not change the view', async ({ page })
   await expect(page.getByText('sample #0 of 20')).toBeVisible();
 });
 
+const summary = (id: string, minute: number) => ({
+  launch_id: id,
+  received_at: `2026-11-28T10:${String(minute).padStart(2, '0')}:00.123456Z`,
+  computed_at: `2026-11-28T10:${String(minute).padStart(2, '0')}:00.180Z`,
+  request: { mass_kg: 1, azimuth_deg: 45, elevation_deg: 60, force_n: 100, burn_duration_s: 0.5 },
+  end_reason: 'END_REASON_GROUND',
+  flight_time_s: 8.83,
+  max_height_m: 95.4,
+  range_m: 220.1,
+  sample_count: 30,
+});
+const ID3 = '11111111-2222-4333-8444-555555555555';
+const problem = (status: number, detail: string) => ({
+  status,
+  contentType: 'application/problem+json',
+  body: JSON.stringify({ type: 'about:blank', title: 'Error', status, detail }),
+});
+
+async function openHistory(page: Page) {
+  await open(page);
+  await connect(page);
+  await page.getByRole('button', { name: 'History' }).click();
+}
+
+test('History: list, Load more, selection with click and Enter', async ({ page }, info) => {
+  await page.route('**/api/launches?*', route => {
+    const more = new URL(route.request().url()).searchParams.get('cursor') === 'c1';
+    return route.fulfill({
+      json: more
+        ? { items: [summary(ID3, 1)], next_cursor: null }
+        : { items: [summary(ID1, 3), summary(ID2, 2)], next_cursor: 'c1' },
+    });
+  });
+  await page.route('**/api/launches/*/trajectory', route => {
+    const id = route.request().url().split('/').at(-2) ?? '';
+    return route.fulfill({ json: trajectory(id, id === ID1 ? 30 : 12) });
+  });
+  await openHistory(page);
+  const rows = page.locator('tbody tr');
+  await expect(rows).toHaveCount(2);
+  await expect(page.getByText('Select a launch')).toBeVisible();
+  await page.getByRole('button', { name: 'Load more' }).click();
+  await expect(rows).toHaveCount(3);
+  await expect(page.getByRole('button', { name: 'Load more' })).toHaveCount(0);
+
+  await rows.nth(0).click();
+  await expect(page.getByText('sample #0 of 30')).toBeVisible();
+  await expect(rows.nth(0)).toHaveAttribute('aria-selected', 'true');
+  await rows.nth(1).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByText('sample #0 of 12')).toBeVisible();
+  await checks(page, 'history', info);
+  await page.getByRole('button', { name: /^Live/ }).click();
+  await expect(page.getByText('Waiting for the first trajectory')).toBeVisible();
+});
+
+test('History: empty state', async ({ page }, info) => {
+  await page.route('**/api/launches?*', route => route.fulfill({ json: { items: [], next_cursor: null } }));
+  await openHistory(page);
+  await expect(page.getByText('No stored launches yet')).toBeVisible();
+  await checks(page, 'history-empty', info);
+});
+
+test('History: loading state', async ({ page }, info) => {
+  await page.route('**/api/launches?*', () => {
+    /* never answers */
+  });
+  await openHistory(page);
+  await expect(page.getByTestId('history-loading')).toBeVisible();
+  await checks(page, 'history-loading', info);
+});
+
+test('History: error state with Retry', async ({ page }, info) => {
+  let fail = true;
+  await page.route('**/api/launches?*', route =>
+    fail ? route.fulfill(problem(503, 'The history database is unreachable')) : route.fulfill({ json: { items: [summary(ID1, 3)], next_cursor: null } }),
+  );
+  await openHistory(page);
+  await expect(page.getByRole('alert')).toContainText('The history database is unreachable');
+  await checks(page, 'history-error', info);
+  fail = false;
+  await page.getByRole('button', { name: 'Retry' }).click();
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+});
+
+test('History: unknown trajectory shows the error with Back to the list', async ({ page }, info) => {
+  await page.route('**/api/launches?*', route => route.fulfill({ json: { items: [summary(ID1, 3)], next_cursor: null } }));
+  await page.route('**/api/launches/*/trajectory', route => route.fulfill(problem(404, 'No stored launch has this id')));
+  await openHistory(page);
+  await page.locator('tbody tr').first().click();
+  await expect(page.getByRole('alert').filter({ hasText: 'No stored launch has this id' })).toBeVisible();
+  await checks(page, 'history-trajectory-error', info);
+  await page.getByRole('button', { name: 'Back to the list' }).click();
+  await expect(page.getByText('Select a launch')).toBeVisible();
+});
+
 test('keyboard focus is visible', async ({ page }) => {
   await open(page);
   await page.keyboard.press('Tab');
