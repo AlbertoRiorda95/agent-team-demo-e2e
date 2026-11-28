@@ -123,6 +123,60 @@ services:
           cpus: "1.0"
           memory: 1G
 
+  # Creates the read-only login `viz_web` of the viz-web server
+  # (docs/design/viewer.md > Read-only database user), then exits 0: a member
+  # of the NOLOGIN role `trajectory_reader`, whose SELECT grants come from
+  # store's migration V3. Idempotent: the role and the user are created only
+  # when missing (either order with store works), the password is set from
+  # VIZ_WEB_DB_PASSWORD on every run. Re-run by hand: `docker compose up db-init`.
+  # The password reaches psql as a variable (quoted with %L), never in argv.
+  db-init:
+    <<: *hardening
+    image: postgres:17-alpine@sha256:f9cf3e1f0066f0eb0c48707d864f0ac5941e9ff454a072077d97a4d278d07d73  # PostgreSQL 17.12 (psql)
+    restart: "no"                # one-shot job
+    user: postgres
+    read_only: true
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ${POSTGRES_DB:?set POSTGRES_DB in .env (see .env.example)}
+      PGUSER: ${POSTGRES_USER:?set POSTGRES_USER in .env (see .env.example)}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env (see .env.example)}
+      VIZ_WEB_DB_PASSWORD: ${VIZ_WEB_DB_PASSWORD:?set VIZ_WEB_DB_PASSWORD in .env (see .env.example)}
+    entrypoint: ["/bin/sh", "-euc"]
+    command:
+      - |
+        psql -X -q -v ON_ERROR_STOP=1 -v "pw=$$VIZ_WEB_DB_PASSWORD" <<'SQL'
+        DO $$$$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'trajectory_reader') THEN
+            CREATE ROLE trajectory_reader NOLOGIN;
+          END IF;
+        EXCEPTION
+          WHEN duplicate_object THEN NULL;  -- store's V3 created it at the same time
+        END
+        $$$$;
+        DO $$$$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'viz_web') THEN
+            CREATE ROLE viz_web LOGIN;
+          END IF;
+        END
+        $$$$;
+        SELECT format('ALTER ROLE viz_web WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT PASSWORD %L', :'pw') \gexec
+        GRANT trajectory_reader TO viz_web WITH INHERIT TRUE;
+        SQL
+        echo "role viz_web ready (member of trajectory_reader)"
+    tmpfs:
+      - /tmp
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
+
   # --- the services ---
   api:
     <<: *hardening
@@ -234,8 +288,18 @@ services:
     environment:
       VIZ_WEB_SERVER_HOST: 0.0.0.0
       VIZ_WEB_SERVER_PORT: "3001"
+      NATS_URL: nats://nats:4222
+      # the read-only login created by db-init (the same names as store, its own values)
+      DATABASE_URL: postgresql://postgres:5432/${POSTGRES_DB:?set POSTGRES_DB in .env (see .env.example)}
+      DATABASE_USER: viz_web
+      DATABASE_PASSWORD: ${VIZ_WEB_DB_PASSWORD:?set VIZ_WEB_DB_PASSWORD in .env (see .env.example)}
     ports:
       - "127.0.0.1:${VIZ_WEB_SERVER_PORT:-3001}:3001"
+    depends_on:
+      nats-init:                 # the JetStream streams exist
+        condition: service_completed_successfully
+      db-init:                   # the viz_web login exists
+        condition: service_completed_successfully
     deploy:
       resources:
         limits:
