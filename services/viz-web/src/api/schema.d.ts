@@ -68,6 +68,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/launches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The stored launches, newest first, in keyset pages
+         * @description The launches store recorded in the tables of the table prefix in force (`<prefix>launches`; the prefix is the `store.table_prefix` of the latest `config.store.applied`, empty until one arrives), newest first by (`received_at`, `id`). Keyset pagination: pass the `next_cursor` of a page as `cursor` to get the next one; pages stay stable while new launches arrive. Each request reads the prefix in force at that moment: after a new `config.store.applied` the next request reads the new tables. Only computed trajectories are stored: accepted or failed launches are not listed.
+         */
+        get: operations["listLaunches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/launches/{id}/trajectory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One stored trajectory, the same shape as the live event
+         * @description The stored launch `id` of the prefix in force with its samples in `seq` order, as a `trajectory.v1.TrajectoryComputed` (proto/trajectory/v1/trajectory.proto) in proto3 JSON with the proto field names, enums as names and every field present: the same encoding as the `trajectory` event of `GET /api/live`, decoded with `fromJson` and `TrajectoryComputedSchema` of `@albertoriorda95/trajectory-proto`. `accepted_at` is the stored `received_at` and `config` the stored snapshot; the timestamps keep their microseconds. About 15 MB at the contract's cap of 100000 samples.
+         */
+        get: operations["getLaunchTrajectory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/accepted-launches": {
         parameters: {
             query?: never;
@@ -97,7 +137,7 @@ export interface paths {
         };
         /**
          * Liveness for the probes
-         * @description Plain liveness: `degraded` (503) while a NATS subscription (`launches.accepted` or `trajectories.computed`) is down, `ok` (200) otherwise. It does not wait for the start-up replay of the record.
+         * @description Plain liveness: `degraded` (503) while a NATS subscription (`launches.accepted`, `trajectories.computed` or `config.store.applied`) is down, `ok` (200) otherwise. PostgreSQL is not checked: while it is down only the history routes answer 503. It does not wait for the start-up replay of the record.
          */
         get: operations["health"];
         put?: never;
@@ -112,6 +152,41 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description RFC 9457 problem details (as in docs/api/openapi.yaml). */
+        Problem: {
+            /** @example about:blank */
+            type: string;
+            title: string;
+            status: number;
+            detail: string;
+        };
+        LaunchPage: {
+            items: components["schemas"]["LaunchSummary"][];
+            /** @description The `cursor` of the next page; null on the last page. */
+            next_cursor: string | null;
+        };
+        /** @description One stored launch (a row of `<prefix>launches`). */
+        LaunchSummary: {
+            /** Format: uuid */
+            launch_id: string;
+            /**
+             * Format: date-time
+             * @description When the api accepted the launch (RFC 3339, UTC, up to microseconds).
+             */
+            received_at: string;
+            /**
+             * Format: date-time
+             * @description When the propagator finished (RFC 3339, UTC, up to microseconds).
+             */
+            computed_at: string;
+            request: components["schemas"]["LaunchRequest"];
+            /** @enum {string} */
+            end_reason: "END_REASON_GROUND" | "END_REASON_TIME_LIMIT";
+            flight_time_s: number;
+            max_height_m: number;
+            range_m: number;
+            sample_count: number;
+        };
         /** @description The data of the `bus` event of `GET /api/live`. */
         BusState: {
             /** @enum {string} */
@@ -139,7 +214,25 @@ export interface components {
             [key: string]: unknown;
         };
     };
-    responses: never;
+    responses: {
+        /** @description PostgreSQL is unreachable or not configured (DATABASE_URL unset); retry later. */
+        HistoryUnavailable: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                /**
+                 * @example {
+                 *       "type": "about:blank",
+                 *       "title": "History unavailable",
+                 *       "status": 503,
+                 *       "detail": "The database is not reachable; retry later."
+                 *     }
+                 */
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+    };
     parameters: never;
     requestBodies: never;
     headers: never;
@@ -213,6 +306,138 @@ export interface operations {
                 };
                 content?: never;
             };
+        };
+    };
+    listLaunches: {
+        parameters: {
+            query?: {
+                /** @description The page size. */
+                limit?: number;
+                /** @description The `next_cursor` of the previous page; opaque, absent for the first page. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page; `items` is empty when nothing is stored. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "launch_id": "6f1c2a52-8a43-4d61-9a0e-5b1d1b8f6c21",
+                     *           "received_at": "2026-11-28T10:00:00.123456Z",
+                     *           "computed_at": "2026-11-28T10:00:00.180Z",
+                     *           "request": {
+                     *             "mass_kg": 1,
+                     *             "position": {
+                     *               "x_m": 0,
+                     *               "y_m": 0,
+                     *               "z_m": 0
+                     *             },
+                     *             "azimuth_deg": 45,
+                     *             "elevation_deg": 60,
+                     *             "force_n": 100,
+                     *             "burn_duration_s": 0.5
+                     *           },
+                     *           "end_reason": "END_REASON_GROUND",
+                     *           "flight_time_s": 8.83,
+                     *           "max_height_m": 95.4,
+                     *           "range_m": 220.1,
+                     *           "sample_count": 884
+                     *         }
+                     *       ],
+                     *       "next_cursor": "eyJyIjoiMjAyNi0xMS0yOFQxMDowMDowMC4xMjM0NTZaIiwiaSI6IjZmMWMyYTUyIn0"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["LaunchPage"];
+                };
+            };
+            /** @description `limit` is not an integer in [1, 200], or `cursor` is not a cursor of this API. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "about:blank",
+                     *       "title": "Invalid request",
+                     *       "status": 400,
+                     *       "detail": "limit must be an integer between 1 and 200"
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            503: components["responses"]["HistoryUnavailable"];
+        };
+    };
+    getLaunchTrajectory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The launch_id (a UUID, any case). */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The trajectory. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `id` is not a UUID. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "about:blank",
+                     *       "title": "Invalid request",
+                     *       "status": 400,
+                     *       "detail": "id must be a UUID"
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No stored launch has this id (in the tables of the prefix in force). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "about:blank",
+                     *       "title": "Launch not found",
+                     *       "status": 404,
+                     *       "detail": "No stored launch has the id 6f1c2a52-8a43-4d61-9a0e-5b1d1b8f6c21."
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            503: components["responses"]["HistoryUnavailable"];
         };
     };
     listAcceptedLaunches: {

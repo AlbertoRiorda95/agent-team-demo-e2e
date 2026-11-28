@@ -2,12 +2,14 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import type { Sample } from '@albertoriorda95/trajectory-proto';
 import { Sample_Phase } from '@albertoriorda95/trajectory-proto';
+import HistoryList from './components/HistoryList.vue';
 import ReadoutPanel from './components/ReadoutPanel.vue';
 import SampleTable from './components/SampleTable.vue';
 import SceneView from './components/SceneView.vue';
 import SummaryPanel from './components/SummaryPanel.vue';
 import TimelineBar from './components/TimelineBar.vue';
 import { shortId } from './viewer/format';
+import { useHistoryState } from './viewer/historyState';
 import { useLiveState } from './viewer/liveState';
 import { usePlayback } from './viewer/usePlayback';
 
@@ -15,8 +17,8 @@ const mode = ref<'live' | 'history'>('live');
 const live = useLiveState(() => mode.value === 'live');
 onBeforeUnmount(live.stop);
 
-// History view: the next task (#6) fills this with the selected launch
-const trajectory = computed(() => (mode.value === 'live' ? live.latest.value : null));
+const history = useHistoryState();
+const trajectory = computed(() => (mode.value === 'live' ? live.latest.value : history.trajectory.value));
 const samples = computed<readonly Sample[]>(() => trajectory.value?.samples ?? []);
 const pb = usePlayback(samples);
 const sample = computed(() => samples.value[pb.index.value]);
@@ -33,6 +35,7 @@ const label = computed(() => {
 function choose(m: 'live' | 'history'): void {
   mode.value = m;
   if (m === 'live') live.hasNew.value = false;
+  else if (history.rows.value.length === 0 && !history.loading.value) void history.load();
 }
 // a trajectory shown again (back to Live) starts paused at 0
 watch(mode, () => pb.rewind());
@@ -78,7 +81,7 @@ watch(mode, () => pb.rewind());
       role="status"
       aria-live="polite"
     >
-      {{ live.announcement.value }}
+      {{ mode === 'history' && history.announcement.value ? history.announcement.value : live.announcement.value }}
     </div>
     <div
       v-if="live.toast.value"
@@ -101,8 +104,21 @@ watch(mode, () => pb.rewind());
           :index="pb.index.value"
           :label="label"
           :disconnected="mode === 'live' && live.disconnected.value && trajectory !== null"
+          :loading="mode === 'history' && history.trajectoryLoading.value"
+          :error="mode === 'history' ? history.trajectoryError.value : ''"
           :empty-text="mode === 'live' ? 'Waiting for the first trajectory' : 'Select a launch'"
         />
+        <p
+          v-if="mode === 'history' && history.trajectoryError.value"
+          class="back"
+        >
+          <button
+            type="button"
+            @click="history.clearSelection()"
+          >
+            Back to the list
+          </button>
+        </p>
         <TimelineBar
           :t="pb.t.value"
           :t-last="pb.tLast.value"
@@ -125,16 +141,18 @@ watch(mode, () => pb.rewind());
           :total="samples.length"
         />
         <SummaryPanel :trajectory="trajectory" />
-        <section
+        <HistoryList
           v-if="mode === 'history'"
-          class="panel"
-          aria-labelledby="history-h"
-        >
-          <h2 id="history-h">
-            History
-          </h2>
-          <p>The stored launches list arrives with the History view.</p>
-        </section>
+          :rows="history.rows.value"
+          :loading="history.loading.value"
+          :loading-more="history.loadingMore.value"
+          :error="history.error.value"
+          :has-more="history.hasMore.value"
+          :selected-id="history.selectedId.value"
+          @select="history.select"
+          @retry="history.load()"
+          @more="history.loadMore()"
+        />
       </div>
       <div class="wide">
         <SampleTable
@@ -206,24 +224,19 @@ h1 {
   gap: var(--space-4);
   grid-template-columns: minmax(0, 1fr);
 }
+.main,
+.wide {
+  min-width: 0;
+}
 .side {
+  min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   align-content: start;
 }
-.panel {
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-1);
-  background: var(--color-surface);
-}
-.panel h2 {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-body);
-}
-.panel p {
-  margin: 0;
-  color: var(--color-fg-muted);
+.back {
+  margin: var(--space-2) 0 0;
 }
 @media (min-width: 1100px) {
   .grid {

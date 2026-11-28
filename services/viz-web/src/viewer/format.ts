@@ -24,3 +24,12 @@ export function timeOf(ts: Timestamp | undefined): string {
 }
 
 export const clock = (d: Date): string => d.toTimeString().slice(0, 8);
+
+export function endReasonShort(r: string): string {
+  if (r === 'END_REASON_GROUND') return 'Landed';
+  if (r === 'END_REASON_TIME_LIMIT') return 'Time limit';
+  return 'Unknown';
+}
+
+/** "2026-11-28 10:00:00 UTC" from an RFC 3339 UTC time. */
+export const receivedLabel = (iso: string): string => iso.slice(0, 19).replace('T', ' ') + ' UTC';
