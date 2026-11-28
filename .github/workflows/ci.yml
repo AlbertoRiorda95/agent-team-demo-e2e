@@ -55,7 +55,7 @@ jobs:
           }
           common='^(\.github/workflows/ci\.yml|ci/)'
           out proto      buf.yaml                                "$common|^proto/|^buf\.(yaml|gen\.yaml|lock)$"
-          out api        services/api/pyproject.toml             "$common|^proto/|^services/api/"
+          out api        services/api/pyproject.toml             "$common|^proto/|^docs/api/|^services/api/"
           out propagator services/propagator/CMakeLists.txt      "$common|^proto/|^services/propagator/|^compose\.yml$|^deploy/nats/|^\.env\.example$"
           out ros2       services/ros2-publisher/package.xml     "$common|^proto/|^services/ros2-publisher/"
           out store      services/store/gradlew                  "$common|^proto/|^services/store/"
