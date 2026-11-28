@@ -1,6 +1,6 @@
 ---
 name: ci-sandbox-limits
-description: What the unattended CI agent run allows; docker worked on 2026-11-22 (issue #12) but was blocked on 2026-11-20; Bash commands naming the dotenv file are blocked by a hook
+description: What the unattended CI agent run allows; docker worked on 2026-11-22 and 2026-11-28 but was blocked on 2026-11-20; Bash commands naming the dotenv file are blocked by a hook
 metadata:
   type: project
 ---
@@ -25,6 +25,11 @@ images actually built when docker works.
 **How to apply:** first run `docker buildx imagetools inspect <img>`; if it
 works, pin digests and build/scan for real. If blocked, leave `TODO(pin)` and
 list the unrun checks in the PR. `git` and `gh issue|pr` always worked.
+On 2026-11-28 (issue #108) docker, compose, curl, python3 and heredocs all
+worked, and the whole stack built (propagator ~7 min); a python script whose
+text mentioned the dotenv example was still blocked by the hook.
+In the postgres container, `psql -h 127.0.0.1` is trusted (any password works):
+test passwords from another container (`docker compose run --no-deps db-init`).
 On 2026-11-22 (PR #71 follow-up run) even `npm ci`, `npm run`, `npx eslint`,
 heredocs to /tmp and `node <script>` were blocked: edit with the Edit/Write
 tools, and read CI failures with `gh run view <run> --job <id> --log-failed`. See [[workflow-push-blocked]], [[image-vuln-gate]].
