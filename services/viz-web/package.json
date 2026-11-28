@@ -8,19 +8,27 @@
   },
   "scripts": {
     "dev": "vite --port 5173",
+    "prebuild": "tsc -p ../../libs/trajectory-proto/tsconfig.build.json",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run",
-    "typecheck": "vue-tsc --noEmit"
+    "test": "npm run build:lib && vitest run",
+    "typecheck": "npm run build:lib && vue-tsc --noEmit",
+    "build:lib": "npm --prefix ../../libs/trajectory-proto run build",
+    "gen:api": "openapi-typescript server/openapi.yaml -o src/api/schema.d.ts"
   },
   "dependencies": {
     "@agent-team-demo-e2e/ui-tokens": "0.0.0",
+    "@albertoriorda95/trajectory-proto": "0.2.0",
+    "@bufbuild/protobuf": "2.17.0",
+    "three": "0.187.0",
     "vue": "3.5.46"
   },
   "devDependencies": {
+    "@types/three": "0.187.0",
     "@vitejs/plugin-vue": "6.0.11",
     "@vue/test-utils": "2.4.6",
     "jsdom": "26.0.0",
+    "openapi-typescript": "7.13.0",
     "vite": "8.3.8",
     "vitest": "5.1.1",
     "vue-tsc": "2.2.0"
