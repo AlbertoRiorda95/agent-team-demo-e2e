@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vite --port 5173",
+    "prebuild": "tsc -p ../../libs/trajectory-proto/tsconfig.build.json",
     "build": "vite build",
     "preview": "vite preview",
     "test": "npm run build:lib && vitest run",
