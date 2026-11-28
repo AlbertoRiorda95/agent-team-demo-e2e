@@ -13,16 +13,24 @@ export function sampleIndexAt(samples: readonly Sample[], t: number): number {
   return lo;
 }
 
-/** The playback clock at 1x: the new time after `dtSeconds`, stopping at `tLast`. */
-export function advance(t: number, dtSeconds: number, tLast: number): { t: number; ended: boolean } {
-  const next = t + dtSeconds;
+export const SPEEDS = [0.25, 1, 4] as const;
+
+/** The playback clock: the new time after `dtSeconds` of wall time at `speed`, stopping at `tLast`. */
+export function advance(t: number, dtSeconds: number, tLast: number, speed = 1): { t: number; ended: boolean } {
+  const next = t + dtSeconds * speed;
   return next >= tLast ? { t: tLast, ended: true } : { t: next, ended: false };
 }
 
-/** Time of the sample `delta` steps from the one at or before `t`, clamped. */
+/**
+ * Time of the sample `delta` steps from t: forward goes to the next sample after t,
+ * backward to the last sample before t (the current one when t is between samples).
+ */
 export function stepTime(samples: readonly Sample[], t: number, delta: number): number {
   if (samples.length === 0) return 0;
-  const i = Math.min(samples.length - 1, Math.max(0, sampleIndexAt(samples, t) + delta));
+  const i0 = sampleIndexAt(samples, t);
+  const onSample = (samples[i0]?.tS ?? 0) >= t;
+  const base = delta < 0 && !onSample ? i0 + 1 : i0;
+  const i = Math.min(samples.length - 1, Math.max(0, base + delta));
   return samples[i]?.tS ?? 0;
 }
 

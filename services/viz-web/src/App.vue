@@ -21,7 +21,6 @@ const history = useHistoryState();
 const trajectory = computed(() => (mode.value === 'live' ? live.latest.value : history.trajectory.value));
 const samples = computed<readonly Sample[]>(() => trajectory.value?.samples ?? []);
 const pb = usePlayback(samples);
-const sample = computed(() => samples.value[pb.index.value]);
 const burnEnd = computed(() => {
   const first = samples.value.find(s => s.phase !== Sample_Phase.BURN);
   return first ? first.tS : pb.tLast.value;
@@ -102,6 +101,7 @@ watch(mode, () => pb.rewind());
         <SceneView
           :samples="samples"
           :index="pb.index.value"
+          :state="pb.state.value"
           :label="label"
           :disconnected="mode === 'live' && live.disconnected.value && trajectory !== null"
           :loading="mode === 'history' && history.trajectoryLoading.value"
@@ -126,18 +126,20 @@ watch(mode, () => pb.rewind());
           :playing="pb.playing.value"
           :disabled="samples.length === 0"
           :can-play="pb.canPlay.value"
+          :speed="pb.speed.value"
           @play="pb.play"
           @pause="pb.pause"
           @rewind="pb.rewind"
           @seek="pb.seek"
           @step="pb.step"
+          @step-seconds="pb.stepSeconds"
+          @speed="v => (pb.speed.value = v)"
           @edge="pb.edge"
         />
       </div>
       <div class="side">
         <ReadoutPanel
-          :sample="sample"
-          :index="pb.index.value"
+          :state="pb.state.value"
           :total="samples.length"
         />
         <SummaryPanel :trajectory="trajectory" />

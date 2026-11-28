@@ -1,19 +1,22 @@
 import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue';
 import type { Sample } from '@albertoriorda95/trajectory-proto';
-import { advance, sampleIndexAt, stepTime } from './playback';
+import { interpolateAt } from './interpolate';
+import { advance, stepTime } from './playback';
 
-/** Playback of a sample list at 1x: t, play/pause/rewind/seek, the current sample. */
+/** Playback of a sample list: t, speed, play/pause/rewind/seek, the interpolated state. */
 export function usePlayback(samples: Ref<readonly Sample[]>) {
   const t = ref(0);
   const playing = ref(false);
   const tLast = computed(() => samples.value[samples.value.length - 1]?.tS ?? 0);
-  const index = computed(() => sampleIndexAt(samples.value, t.value));
+  const speed = ref(1);
+  const state = computed(() => interpolateAt(samples.value, t.value));
+  const index = computed(() => state.value?.index ?? 0);
   const canPlay = computed(() => samples.value.length > 1);
   let raf = 0;
   let last = 0;
 
   function frame(now: number): void {
-    const r = advance(t.value, (now - last) / 1000, tLast.value);
+    const r = advance(t.value, (now - last) / 1000, tLast.value, speed.value);
     last = now;
     t.value = r.t;
     if (r.ended) {
@@ -36,6 +39,7 @@ export function usePlayback(samples: Ref<readonly Sample[]>) {
   function seek(v: number): void {
     t.value = Math.min(Math.max(0, v), tLast.value);
   }
+  const stepSeconds = (d: number): void => seek(t.value + d);
   const rewind = (): void => seek(0);
   const step = (d: number): void => seek(stepTime(samples.value, t.value, d));
   const edge = (end: boolean): void => seek(end ? tLast.value : 0);
@@ -47,5 +51,5 @@ export function usePlayback(samples: Ref<readonly Sample[]>) {
   });
   onBeforeUnmount(pause);
 
-  return { t, tLast, index, playing, canPlay, play, pause, seek, rewind, step, edge };
+  return { t, tLast, index, state, speed, playing, canPlay, play, pause, seek, rewind, step, stepSeconds, edge };
 }

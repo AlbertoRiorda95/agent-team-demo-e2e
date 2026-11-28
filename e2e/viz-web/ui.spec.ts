@@ -318,3 +318,47 @@ test('keyboard focus is visible', async ({ page }) => {
   });
   expect(focus).toBe('visible');
 });
+
+// Playback interpolation (docs/design/playback-interpolation.md): a coarse trajectory, 1 s between samples.
+function coarse(id: string) {
+  const t = trajectory(id, 5);
+  t.samples = [0, 1, 2, 3, 4].map(i => ({ ...sample(i, i, i * 10, i * 4, 'PHASE_BALLISTIC'), vx_mps: i * 2 }));
+  t.flight_time_s = 4;
+  return t;
+}
+
+test('interpolation: readout between samples, keyboard steps, speed control, labels', async ({ page }, info) => {
+  await open(page);
+  await connect(page);
+  await send(page, coarse(ID1), ID1);
+  const scrub = page.getByRole('slider', { name: 'Playback time' });
+  const speed = page.getByRole('combobox', { name: 'Playback speed' });
+  await expect(page.getByText('sample #0 of 5')).toBeVisible();
+  await expect(speed).toHaveValue('1');
+  await expect(speed.locator('option')).toHaveText(['0.25×', '1×', '4×']);
+
+  await scrub.focus();
+  await page.keyboard.press('Shift+ArrowRight');
+  await expect(scrub).toHaveAttribute('aria-valuetext', 't = 1.00 s');
+  await expect(page.getByText('sample #1 of 5')).toBeVisible();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByText('sample #2 of 5')).toBeVisible();
+  // t = 2.5: between #2 and #3, the readout is the average of the two samples
+  await scrub.evaluate((el: HTMLInputElement) => {
+    el.value = '2.5';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await expect(page.getByText('between #2 and #3 of 5')).toBeVisible();
+  await expect(page.getByText('25.00 m', { exact: true }).first()).toBeVisible(); // x
+  await expect(page.getByText('5.00 m/s', { exact: true }).first()).toBeVisible(); // vx
+  await expect(page.locator('tr[aria-current="true"]')).toContainText('2');
+  await checks(page, 'interpolation', info);
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.getByText('sample #2 of 5')).toBeVisible();
+
+  await speed.selectOption('4');
+  await page.keyboard.press('Home');
+  await page.getByRole('button', { name: 'Play' }).click();
+  await expect(page.getByText('sample #4 of 5')).toBeVisible({ timeout: 2000 }); // 4 s of trajectory in about 1 s at 4x
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+});

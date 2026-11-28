@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import type { Sample } from '@albertoriorda95/trajectory-proto';
+import type { PlaybackState } from '../viewer/interpolate';
 import { createScene, type SceneApi } from '../viewer/scene';
 
 const props = defineProps<{
   samples: readonly Sample[];
   index: number;
+  state?: PlaybackState;
   label: string;
   loading?: boolean;
   error?: string;
@@ -19,7 +21,10 @@ const failure = ref('');
 let observer: ResizeObserver | undefined;
 
 function draw(): void {
-  if (api.value && props.samples.length > 0) api.value.setTrajectory(props.samples);
+  if (api.value && props.samples.length > 0) {
+    api.value.setTrajectory(props.samples);
+    if (props.state) api.value.setState(props.state);
+  }
 }
 
 onMounted(() => {
@@ -40,7 +45,7 @@ onBeforeUnmount(() => {
   api.value?.dispose();
 });
 watch(() => props.samples, draw);
-watch(() => props.index, i => api.value?.setIndex(i));
+watch(() => props.state, st => st && api.value?.setState(st));
 
 const empty = () => props.samples.length === 0 && !props.loading && !props.error;
 </script>
