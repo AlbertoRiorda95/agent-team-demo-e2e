@@ -1,7 +1,9 @@
 // The ports of the viz-web server's use cases: what they need from the
 // outside (the message bus, a logger, a clock). The NATS adapter
-// (adapters/nats-bus.ts) implements the bus; the tests use a fake.
-import type { PipelineError, ServiceStatus } from '@albertoriorda95/trajectory-proto';
+// (adapters/nats-bus.ts) implements the bus, the PostgreSQL adapter
+// (adapters/pg-history.ts) the history; the tests use fakes.
+import type { PipelineError, ServiceStatus, TrajectoryComputed } from '@albertoriorda95/trajectory-proto';
+import type { HistoryCursor, LaunchSummary } from '../domain/history.ts';
 
 /** Receives the payload of one message (binary Protobuf). */
 export type MessageHandler = (data: Uint8Array) => Promise<void>;
@@ -12,6 +14,8 @@ export interface MessageHandlers {
   launchesAccepted: MessageHandler;
   /** `trajectories.computed`, from the last message of the stream on. */
   trajectoriesComputed: MessageHandler;
+  /** `config.store.applied`, from the latest message of the subject on. */
+  storeConfigApplied: MessageHandler;
 }
 
 /** Called with true when the NATS connection is (re)established, false when it drops. */
@@ -52,3 +56,19 @@ export interface Logger {
 }
 
 export type Clock = () => Date;
+
+/** The history cannot be read: the database is unreachable or answers with an error (503). */
+export class HistoryUnavailable extends Error {}
+
+/** The stored history, read only, in the tables of one prefix. */
+export interface HistoryRepository {
+  /**
+   * At most `limit` launches newest first by (received_at, id), strictly after
+   * `after` when given. Throws HistoryUnavailable.
+   */
+  listLaunches(prefix: string, after: HistoryCursor | undefined, limit: number): Promise<LaunchSummary[]>;
+  /** The stored trajectory with its samples in seq order; undefined when unknown. Throws HistoryUnavailable. */
+  findTrajectory(prefix: string, launchId: string): Promise<TrajectoryComputed | undefined>;
+  /** Closes the connections. */
+  close(): Promise<void>;
+}

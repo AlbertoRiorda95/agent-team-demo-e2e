@@ -8,6 +8,8 @@ import { toJson } from '@bufbuild/protobuf';
 import { LaunchRequestSchema } from '@albertoriorda95/trajectory-proto';
 import { AcceptedLaunches, type AcceptedLaunch } from './domain/accepted-launches.ts';
 import { type HealthCheck, healthStatus } from './health.ts';
+import type { BrowseHistory } from './application/browse-history.ts';
+import { registerHistoryRoutes } from './http/history-routes.ts';
 import type { LiveStream } from './http/live-stream.ts';
 
 export interface AppOptions {
@@ -17,6 +19,8 @@ export interface AppOptions {
   acceptedLaunches?: AcceptedLaunches;
   /** The stream behind `GET /api/live`; the route is not there without it. */
   liveStream?: LiveStream;
+  /** The history behind `GET /api/launches` and `GET /api/launches/{id}/trajectory`; the routes are not there without it. */
+  history?: BrowseHistory;
   /** The built UI (`services/viz-web/dist`), served at `/`; not served when the folder does not exist. */
   uiDir?: string;
   /** Fastify logger option: JSON logs in production, off in the tests. */
@@ -87,6 +91,8 @@ export function buildApp(options: AppOptions = {}): FastifyInstance {
     // the open streams would keep app.close() waiting for ever
     app.addHook('preClose', async () => liveStream.close());
   }
+
+  if (options.history !== undefined) registerHistoryRoutes(app, options.history);
 
   if (options.uiDir !== undefined) {
     if (existsSync(options.uiDir)) {
