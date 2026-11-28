@@ -1,12 +1,14 @@
 // The NATS adapter of the bus port (application/ports.ts), with nats.js v3.
-// - Two ordered, ephemeral JetStream consumers, each on the stream that holds
+// - Three ordered, ephemeral JetStream consumers, each on the stream that holds
 //   its subject (proto/README.md); an ordered consumer resumes after a
 //   reconnect with no gaps:
 //   - `launches.accepted` (`LAUNCHES`), deliver policy "all": every start
 //     replays the stream;
 //   - `trajectories.computed` (`TRAJECTORIES`), deliver policy "last": every
 //     start reads the latest trajectory, then the new ones
-//     (docs/design/viewer.md > Data and API).
+//     (docs/design/viewer.md > Data and API);
+//   - `config.store.applied` (`CONFIG`), deliver policy "last per subject":
+//     every start reads the config store has in force, then the new ones.
 // - The connection state goes to the listeners of `onConnectionChange`.
 // - The server never crashes because NATS is down: the connection is retried
 //   for ever, and the subscription is set up again (with a backoff) when it
@@ -24,6 +26,7 @@ import {
   PIPELINE_ERRORS,
   TRAJECTORIES_COMPUTED,
   PipelineErrorSchema,
+  configAppliedSubject,
   ServiceStatusSchema,
   statusSubject,
   type PipelineError,
@@ -88,6 +91,7 @@ export class NatsBus implements Bus {
     this.#consumptions = [
       consumption(LAUNCHES_ACCEPTED, DeliverPolicy.All, handlers.launchesAccepted),
       consumption(TRAJECTORIES_COMPUTED, DeliverPolicy.Last, handlers.trajectoriesComputed),
+      consumption(configAppliedSubject('store'), DeliverPolicy.LastPerSubject, handlers.storeConfigApplied),
     ];
     void this.#run();
   }

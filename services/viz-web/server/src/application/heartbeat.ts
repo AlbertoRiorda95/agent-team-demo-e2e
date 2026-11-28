@@ -27,7 +27,7 @@ export async function sendHeartbeat(deps: HeartbeatDeps): Promise<void> {
     service: SERVICE_NAME,
     instance: deps.instance,
     state: up ? ServiceStatus_State.OK : ServiceStatus_State.DEGRADED,
-    detail: up ? '' : 'a subscription (launches.accepted or trajectories.computed) is down',
+    detail: up ? '' : 'a subscription (launches.accepted, trajectories.computed or config.store.applied) is down',
     version: deps.version,
     configVersion: 0n,
     sentAt: timestampFromDate((deps.clock ?? (() => new Date()))()),
