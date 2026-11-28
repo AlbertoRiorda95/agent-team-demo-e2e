@@ -6,12 +6,27 @@ import type { PipelineError, ServiceStatus } from '@albertoriorda95/trajectory-p
 /** Receives the payload of one message (binary Protobuf). */
 export type MessageHandler = (data: Uint8Array) => Promise<void>;
 
-/** The subscription to `launches.accepted`, replayed from the start of the stream. */
-export interface LaunchesAcceptedSubscription {
+/** The handlers of the subscriptions, one per subject. */
+export interface MessageHandlers {
+  /** `launches.accepted`, replayed from the start of the stream. */
+  launchesAccepted: MessageHandler;
+  /** `trajectories.computed`, from the last message of the stream on. */
+  trajectoriesComputed: MessageHandler;
+}
+
+/** Called with true when the NATS connection is (re)established, false when it drops. */
+export type ConnectionListener = (connected: boolean) => void;
+
+/** The subscriptions of the server. */
+export interface Subscriptions {
   /** Starts consuming in the background; returns at once. Call once. */
-  start(handler: MessageHandler): void;
-  /** True while the subscription is up (connected and consuming). */
+  start(handlers: MessageHandlers): void;
+  /** True while every subscription is up (connected and consuming). */
   isUp(): boolean;
+  /** True while the NATS connection is up. */
+  isConnected(): boolean;
+  /** Registers a listener of the connection state; returns the function that removes it. */
+  onConnectionChange(listener: ConnectionListener): () => void;
 }
 
 /** What the use cases publish. */
@@ -24,7 +39,7 @@ export interface Publisher {
   publishStatus(status: ServiceStatus): Promise<void>;
 }
 
-export interface Bus extends LaunchesAcceptedSubscription, Publisher {
+export interface Bus extends Subscriptions, Publisher {
   /** Stops consuming and closes the connection. */
   close(): Promise<void>;
 }

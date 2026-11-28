@@ -16,7 +16,7 @@ import type { Clock, Logger, MessageHandler, Publisher } from './ports.ts';
 
 export const SERVICE_NAME = 'viz-web';
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface RecordLaunchDeps {
   record: AcceptedLaunches;
@@ -25,7 +25,8 @@ export interface RecordLaunchDeps {
   clock?: Clock;
 }
 
-class InvalidMessage extends Error {
+/** A message rejected at the edge; `launchId` when the message had one. */
+export class InvalidMessage extends Error {
   readonly launchId: string;
   constructor(message: string, launchId = '') {
     super(message);
@@ -72,7 +73,7 @@ export function recordLaunchAccepted(deps: RecordLaunchDeps): MessageHandler {
       launch = validate(decode(data));
     } catch (error) {
       if (!(error instanceof InvalidMessage)) throw error;
-      await reject(deps, clock, error);
+      await reportInvalidMessage(deps, clock, LAUNCHES_ACCEPTED, error);
       return;
     }
     if (!deps.record.add(launch)) {
@@ -81,24 +82,27 @@ export function recordLaunchAccepted(deps: RecordLaunchDeps): MessageHandler {
   };
 }
 
-async function reject(deps: RecordLaunchDeps, clock: Clock, error: InvalidMessage): Promise<void> {
+/** Logs the rejected message and reports it once on `pipeline.errors`; never throws. */
+export async function reportInvalidMessage(
+  deps: { publisher: Publisher; logger: Logger },
+  clock: Clock,
+  subject: string,
+  error: InvalidMessage,
+): Promise<void> {
   deps.logger.warn(
-    { subject: LAUNCHES_ACCEPTED, launch_id: error.launchId, reason: error.message },
+    { subject, launch_id: error.launchId, reason: error.message },
     'message rejected',
   );
   const pipelineError = create(PipelineErrorSchema, {
     launchId: error.launchId,
     service: SERVICE_NAME,
-    subject: LAUNCHES_ACCEPTED,
+    subject,
     message: error.message,
     occurredAt: timestampFromDate(clock()),
   });
   try {
     await deps.publisher.publishPipelineError(pipelineError);
   } catch (publishError) {
-    deps.logger.error(
-      { err: publishError, subject: LAUNCHES_ACCEPTED },
-      'cannot publish the PipelineError',
-    );
+    deps.logger.error({ err: publishError, subject }, 'cannot publish the PipelineError');
   }
 }
