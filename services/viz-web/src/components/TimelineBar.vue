@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { SPEEDS } from '../viewer/playback';
 
-const props = defineProps<{ t: number; tLast: number; burnEnd: number; playing: boolean; disabled: boolean; canPlay: boolean }>();
-const emit = defineEmits<{ play: []; pause: []; rewind: []; seek: [t: number]; step: [delta: number]; edge: [end: boolean] }>();
+const props = defineProps<{ t: number; tLast: number; burnEnd: number; playing: boolean; disabled: boolean; canPlay: boolean; speed: number }>();
+const emit = defineEmits<{ play: []; pause: []; rewind: []; seek: [t: number]; step: [delta: number]; stepSeconds: [delta: number]; speed: [value: number]; edge: [end: boolean] }>();
 
 const burnPct = computed(() => (props.tLast > 0 ? Math.min(100, (props.burnEnd / props.tLast) * 100) : 0));
 const text = computed(() => `t = ${props.t.toFixed(2)} s`);
 
 function onKey(e: KeyboardEvent): void {
   const map: Record<string, () => void> = {
-    ArrowLeft: () => emit('step', -1),
-    ArrowDown: () => emit('step', -1),
-    ArrowRight: () => emit('step', 1),
-    ArrowUp: () => emit('step', 1),
+    ArrowLeft: () => (e.shiftKey ? emit('stepSeconds', -1) : emit('step', -1)),
+    ArrowDown: () => (e.shiftKey ? emit('stepSeconds', -1) : emit('step', -1)),
+    ArrowRight: () => (e.shiftKey ? emit('stepSeconds', 1) : emit('step', 1)),
+    ArrowUp: () => (e.shiftKey ? emit('stepSeconds', 1) : emit('step', 1)),
     Home: () => emit('edge', false),
     End: () => emit('edge', true),
   };
@@ -59,6 +60,21 @@ function onKey(e: KeyboardEvent): void {
       @keydown="onKey"
     >
     <span class="time">{{ t.toFixed(2) }} / {{ tLast.toFixed(2) }} s</span>
+    <label class="speed">
+      <span>Speed</span>
+      <select
+        aria-label="Playback speed"
+        :value="speed"
+        :disabled="disabled"
+        @change="emit('speed', Number(($event.target as HTMLSelectElement).value))"
+      >
+        <option
+          v-for="v in SPEEDS"
+          :key="v"
+          :value="v"
+        >{{ v }}×</option>
+      </select>
+    </label>
   </div>
 </template>
 
@@ -90,6 +106,21 @@ function onKey(e: KeyboardEvent): void {
   border: 0;
   border-radius: var(--radius-1);
   background: var(--color-fg);
+}
+.speed {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-fg-muted);
+}
+.speed select {
+  min-height: var(--touch-target);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-1);
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font: inherit;
 }
 .time {
   font-family: var(--font-mono);

@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import type { PlaybackState } from './interpolate';
 import { Sample_Phase, type Sample } from '@albertoriorda95/trajectory-proto';
 
 export interface SceneApi {
   setTrajectory(samples: readonly Sample[]): void;
-  setIndex(i: number): void;
+  setState(s: PlaybackState): void;
   resetView(): void;
   resize(): void;
   dispose(): void;
@@ -54,6 +55,8 @@ export function createScene(host: HTMLElement): SceneApi {
 
   let points: Float32Array = new Float32Array(0);
   let trail: THREE.Line | null = null;
+  let trailBuf: Float32Array = new Float32Array(0);
+  let lastSlot = -1;
   let center = new THREE.Vector3();
   let radius = 1;
   let disposed = false;
@@ -132,19 +135,33 @@ export function createScene(host: HTMLElement): SceneApi {
       }
 
       const t = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: new THREE.Color(css('--color-fg')) }));
-      t.geometry.setAttribute('position', new THREE.BufferAttribute(points, 3));
+      // one extra slot at the end of the buffer holds the interpolated point
+      lastSlot = -1;
+      trailBuf = new Float32Array((n + 1) * 3);
+      trailBuf.set(points);
+      t.geometry.setAttribute('position', new THREE.BufferAttribute(trailBuf, 3));
       t.geometry.setDrawRange(0, 1);
       trail = t;
       dynamic.add(t);
       marker.scale.setScalar(radius / 60);
-      this.setIndex(0);
       fit();
     },
-    setIndex(i) {
-      if (points.length === 0) return;
-      const k = Math.min(Math.max(0, i), points.length / 3 - 1);
-      marker.position.set(points[k * 3] ?? 0, points[k * 3 + 1] ?? 0, points[k * 3 + 2] ?? 0);
-      trail?.geometry.setDrawRange(0, k + 1);
+    setState(st) {
+      const n = points.length / 3;
+      if (n === 0) return;
+      const [x, y, z] = [st.x, st.z, -st.y];
+      marker.position.set(x, y, z);
+      // the trail: samples 0..index, then the interpolated point (the slot after them)
+      const k = Math.min(st.index, n - 1);
+      const attr = trail?.geometry.getAttribute('position') as THREE.BufferAttribute | undefined;
+      if (attr) {
+        // restore the slot the previous state overwrote, then write the current one
+        if (lastSlot >= 0 && lastSlot < n) trailBuf.set(points.subarray(lastSlot * 3, lastSlot * 3 + 3), lastSlot * 3);
+        trailBuf.set([x, y, z], (k + 1) * 3);
+        lastSlot = k + 1;
+        attr.needsUpdate = true;
+        trail?.geometry.setDrawRange(0, k + 2);
+      }
       render();
     },
     resetView: fit,
