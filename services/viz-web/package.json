@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite --port 5173",
-    "build": "npm run build:lib && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "test": "npm run build:lib && vitest run",
     "typecheck": "npm run build:lib && vue-tsc --noEmit",
